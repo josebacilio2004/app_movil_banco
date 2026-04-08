@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "inverse-on-surface": "#f0f0f3",
+                    "surface-container-high": "#e8e8eb",
+                    "surface-tint": "#c0000c",
+                    "on-background": "#1a1c1e",
+                    "primary": "#b5000b",
+                    "primary-container": "#e30613",
+                    "on-primary-fixed-variant": "#930007",
+                    "primary-fixed-dim": "#ffb4aa",
+                    "on-primary-container": "#fff5f3",
+                    "on-tertiary": "#ffffff",
+                    "tertiary": "#0059a8",
+                    "error": "#ba1a1a",
+                    "on-primary": "#ffffff",
+                    "error-container": "#ffdad6",
+                    "secondary-fixed-dim": "#a9caef",
+                    "secondary-fixed": "#cfe4ff",
+                    "on-surface-variant": "#5e3f3b",
+                    "on-error": "#ffffff",
+                    "on-tertiary-container": "#f5f7ff",
+                    "surface-container-lowest": "#ffffff",
+                    "inverse-primary": "#ffb4aa",
+                    "on-tertiary-fixed": "#001b3c",
+                    "tertiary-fixed-dim": "#a7c8ff",
+                    "secondary-container": "#b7d8fe",
+                    "surface-container-low": "#f3f3f6",
+                    "inverse-surface": "#2f3133",
+                    "secondary": "#416182",
+                    "surface-container-highest": "#e2e2e5",
+                    "on-tertiary-fixed-variant": "#004788",
+                    "on-secondary": "#ffffff",
+                    "on-secondary-fixed-variant": "#284969",
+                    "on-error-container": "#93000a",
+                    "outline-variant": "#e9bcb6",
+                    "surface-dim": "#d9dadd",
+                    "surface": "#f9f9fc",
+                    "primary-fixed": "#ffdad5",
+                    "surface-container": "#edeef1",
+                    "surface-bright": "#f9f9fc",
+                    "on-secondary-fixed": "#001d34",
+                    "surface-variant": "#e2e2e5",
+                    "on-primary-fixed": "#410001",
+                    "tertiary-fixed": "#d5e3ff",
+                    "background": "#f9f9fc",
+                    "on-secondary-container": "#3e5e7f",
+                    "outline": "#936e69",
+                    "on-surface": "#1a1c1e",
+                    "tertiary-container": "#0071d4"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Manrope"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .font-headline { font-family: 'Manrope', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .pin-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 9999px;
+            transition: all 0.2s ease;
+        }
+        .key-active:active {
+            transform: scale(0.92);
+            background-color: #e2e2e5;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface min-h-screen flex flex-col items-center overflow-hidden selection:bg-primary-container">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-[#f9f9fc] dark:bg-slate-950/80 backdrop-blur-md">
+<div class="flex items-center justify-between px-6 h-16 w-full max-w-screen-xl mx-auto">
+<button class="text-[#b5000b] dark:text-[#e30613] hover:bg-[#f3f3f6] dark:hover:bg-slate-800 transition-colors rounded-full p-2 active:scale-95 duration-200">
+<span class="material-symbols-outlined" data-icon="arrow_back">arrow_back</span>
+</button>
+<span class="text-2xl font-['Manrope'] font-bold text-[#b5000b] dark:text-[#e30613] tracking-tighter">MiBCP</span>
+<button class="text-[#b5000b] dark:text-[#e30613] hover:bg-[#f3f3f6] dark:hover:bg-slate-800 transition-colors rounded-full p-2 active:scale-95 duration-200">
+<span class="material-symbols-outlined" data-icon="help_outline">help_outline</span>
+</button>
+</div>
+</header>
+<main class="flex-1 w-full max-w-md flex flex-col items-center px-8 pt-24 pb-12">
+<!-- Header Text -->
+<div class="w-full mb-12 text-center md:text-left">
+<h1 class="font-headline text-3xl font-bold tracking-tight text-on-surface mb-2 leading-tight">
+                Ingresa tu clave de internet
+            </h1>
+<p class="font-body text-secondary text-base font-medium">
+                Clave de 6 dígitos
+            </p>
+</div>
+<!-- Security Badge / Visual Element -->
+<div class="mb-10 w-24 h-24 rounded-full bg-surface-container-low flex items-center justify-center relative">
+<div class="absolute inset-0 rounded-full border-2 border-primary/5 scale-125 animate-pulse"></div>
+<span class="material-symbols-outlined text-primary text-4xl" data-icon="lock_open">lock_open</span>
+</div>
+<!-- PIN Indicator -->
+<div class="flex flex-col items-center w-full gap-8">
+<div class="flex gap-4 justify-center items-center">
+<!-- Filled Dot -->
+<div class="pin-dot bg-primary shadow-sm shadow-primary/20"></div>
+<!-- Filled Dot -->
+<div class="pin-dot bg-primary shadow-sm shadow-primary/20"></div>
+<!-- Filled Dot -->
+<div class="pin-dot bg-primary shadow-sm shadow-primary/20"></div>
+<!-- Empty Dots -->
+<div class="pin-dot border-2 border-outline-variant bg-transparent"></div>
+<div class="pin-dot border-2 border-outline-variant bg-transparent"></div>
+<div class="pin-dot border-2 border-outline-variant bg-transparent"></div>
+</div>
+<button class="flex items-center gap-2 text-secondary font-semibold text-sm py-2 px-4 rounded-full hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined text-[20px]" data-icon="visibility">visibility</span>
+<span>Mostrar</span>
+</button>
+</div>
+<!-- Spacer -->
+<div class="flex-1"></div>
+<!-- Custom Keypad Section -->
+<div class="w-full max-w-xs mx-auto grid grid-cols-3 gap-y-4 gap-x-6 justify-items-center mt-8">
+<!-- Row 1 -->
+<button class="key-active w-16 h-16 flex items-center justify-center rounded-full bg-surface-container-low transition-all">
+<span class="font-headline text-2xl font-bold">1</span>
+</button>
+<button class="key-active w-16 h-16 flex items-center justify-center rounded-full bg-surface-container-low transition-all">
+<span class="font-headline text-2xl font-bold">2</span>
+</button>
+<button class="key-active w-16 h-16 flex items-center justify-center rounded-full bg-surface-container-low transition-all">
+<span class="font-headline text-2xl font-bold">3</span>
+</button>
+<!-- Row 2 -->
+<button class="key-active w-16 h-16 flex items-center justify-center rounded-full bg-surface-container-low transition-all">
+<span class="font-headline text-2xl font-bold">4</span>
+</button>
+<button class="key-active w-16 h-16 flex items-center justify-center rounded-full bg-surface-container-low transition-all">
+<span class="font-headline text-2xl font-bold">5</span>
+</button>
+<button class="key-active w-16 h-16 flex items-center justify-center rounded-full bg-surface-container-low transition-all">
+<span class="font-headline text-2xl font-bold">6</span>
+</button>
+<!-- Row 3 -->
+<button class="key-active w-16 h-16 flex items-center justify-center rounded-full bg-surface-container-low transition-all">
+<span class="font-headline text-2xl font-bold">7</span>
+</button>
+<button class="key-active w-16 h-16 flex items-center justify-center rounded-full bg-surface-container-low transition-all">
+<span class="font-headline text-2xl font-bold">8</span>
+</button>
+<button class="key-active w-16 h-16 flex items-center justify-center rounded-full bg-surface-container-low transition-all">
+<span class="font-headline text-2xl font-bold">9</span>
+</button>
+<!-- Row 4 -->
+<div class="w-16 h-16"></div> <!-- Empty spacer -->
+<button class="key-active w-16 h-16 flex items-center justify-center rounded-full bg-surface-container-low transition-all">
+<span class="font-headline text-2xl font-bold">0</span>
+</button>
+<button class="key-active w-16 h-16 flex items-center justify-center rounded-full transition-all text-secondary">
+<span class="material-symbols-outlined text-2xl" data-icon="backspace">backspace</span>
+</button>
+</div>
+<!-- Footer Link -->
+<div class="mt-10 mb-6">
+<a class="text-tertiary font-semibold text-sm hover:underline decoration-2 underline-offset-4" href="#">
+                Olvidé mi clave
+            </a>
+</div>
+</main>
+<!-- Bottom Separation for Mobile Spacing -->
+<div class="h-6 w-full"></div>
+<!-- Decorative Soft Glow Background -->
+<div class="fixed -bottom-40 -left-40 w-96 h-96 bg-primary/5 rounded-full blur-[100px] -z-10"></div>
+<div class="fixed -top-40 -right-40 w-96 h-96 bg-secondary/5 rounded-full blur-[100px] -z-10"></div>
+</body></html>
