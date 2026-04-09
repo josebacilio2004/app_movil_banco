@@ -6,9 +6,12 @@ import '../models/prestamo.dart';
 
 class FirestoreService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
+ 
+  String _normalize(String value) => value.replaceAll(RegExp(r'\D'), '');
 
   // Crear perfil de usuario y cuentas demo
   Future<void> createUserProfile(UserModel user, {String? customNumber}) async {
+    final normalizedNumber = customNumber != null ? _normalize(customNumber) : '4521890123456789';
     await _db.collection('usuarios').doc(user.userId).set(user.toMap());
     
     // Crear cuentas demo
@@ -18,7 +21,7 @@ class FirestoreService {
     batch.set(cuentaCorrienteRef, {
       'userId': user.userId,
       'tipo': 'corriente',
-      'numero': customNumber ?? '****4521',
+      'numero': normalizedNumber,
       'saldo': 4250.00,
     });
 
@@ -103,12 +106,27 @@ class FirestoreService {
   // Buscar email por número de tarjeta/cuenta
   Future<String?> getEmailByCardNumber(String cardNumber) async {
     try {
+      final normalized = _normalize(cardNumber);
       final querySnapshot = await _db.collection('cuentas')
-          .where('numero', isEqualTo: cardNumber)
+          .where('numero', isEqualTo: normalized)
           .limit(1)
           .get();
 
-      if (querySnapshot.docs.isEmpty) return null;
+      if (querySnapshot.docs.isEmpty) {
+        // Fallback: Try searching with exact input if normalization changed it
+        if (normalized != cardNumber) {
+          final exactQuery = await _db.collection('cuentas')
+              .where('numero', isEqualTo: cardNumber)
+              .limit(1)
+              .get();
+          if (exactQuery.docs.isNotEmpty) {
+            final userId = exactQuery.docs.first.data()['userId'];
+            final userDoc = await _db.collection('usuarios').doc(userId).get();
+            return userDoc.data()?['email'] as String?;
+          }
+        }
+        return null;
+      }
 
       final userId = querySnapshot.docs.first.data()['userId'];
       final userDoc = await _db.collection('usuarios').doc(userId).get();
