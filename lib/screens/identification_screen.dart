@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../services/auth_service.dart';
 import '../services/firestore_service.dart';
 import '../utils/constants.dart';
 import '../widgets/stitch_widgets.dart';
@@ -137,6 +138,10 @@ class _IdentificationScreenState extends State<IdentificationScreen> {
                            if (query.contains('@')) {
                              loginEmail = query;
                            } else {
+                             // Asegurar identidad temporal para evitar permission-denied
+                             final auth = context.read<AuthService>();
+                             await auth.signInAnonymously();
+                             
                              // Buscar email por tarjeta/cuenta
                              final firestore = context.read<FirestoreService>();
                              loginEmail = await firestore.getEmailByCardNumber(query);

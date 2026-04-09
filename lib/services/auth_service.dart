@@ -36,6 +36,17 @@ class AuthService extends ChangeNotifier {
     }
   }
 
+  Future<void> signInAnonymously() async {
+    try {
+      if (_auth.currentUser == null) {
+        print("AUTH: Iniciando sesión anónima para búsqueda...");
+        await _auth.signInAnonymously();
+      }
+    } catch (e) {
+      print("AUTH ERROR anónimo: $e");
+    }
+  }
+
   Future<String?> register(String email, String password) async {
     try {
       await _auth.createUserWithEmailAndPassword(email: email, password: password);
