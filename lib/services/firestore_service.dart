@@ -9,17 +9,24 @@ class FirestoreService {
  
   String _normalize(String value) => value.replaceAll(RegExp(r'\D'), '');
 
-  // Crear perfil de usuario y cuentas demo
-  Future<void> createUserProfile(UserModel user, {String? customNumber}) async {
-    final normalizedNumber = customNumber != null ? _normalize(customNumber) : '4521890123456789';
+  // Guardar perfil de usuario (sin tocar cuentas)
+  Future<void> saveUserProfile(UserModel user) async {
     await _db.collection('usuarios').doc(user.userId).set(user.toMap());
+  }
+
+  // Generar datos iniciales para una nueva cuenta
+  Future<void> generateInitialData(String userId, {String? customNumber}) async {
+    final normalizedNumber = customNumber != null ? _normalize(customNumber) : '4521890123456789';
     
-    // Crear cuentas demo
+    // Verificar si ya tiene cuentas para no duplicar
+    final existing = await _db.collection('cuentas').where('userId', isEqualTo: userId).limit(1).get();
+    if (existing.docs.isNotEmpty) return;
+
     final batch = _db.batch();
     
     final cuentaCorrienteRef = _db.collection('cuentas').doc();
     batch.set(cuentaCorrienteRef, {
-      'userId': user.userId,
+      'userId': userId,
       'tipo': 'corriente',
       'numero': normalizedNumber,
       'saldo': 4250.00,
@@ -27,15 +34,15 @@ class FirestoreService {
 
     final cuentaAhorroRef = _db.collection('cuentas').doc();
     batch.set(cuentaAhorroRef, {
-      'userId': user.userId,
+      'userId': userId,
       'tipo': 'ahorro',
-      'numero': '****7890',
+      'numero': '7890123456781234',
       'saldo': 2800.00,
       'metaAhorro': 20000.00,
       'progresoAhorro': 2800.00,
     });
 
-    // Agregar 5 movimientos iniciales
+    // Movimientos iniciales
     final movements = [
       {'descripcion': 'Pago Agua SEDAPAL', 'monto': 120.0, 'tipo': 'debito', 'fecha': DateTime.now()},
       {'descripcion': 'Transferencia Recibida', 'monto': 500.0, 'tipo': 'credito', 'fecha': DateTime.now().subtract(const Duration(days: 1))},
@@ -47,7 +54,7 @@ class FirestoreService {
     for (var m in movements) {
       final txRef = _db.collection('transacciones').doc();
       batch.set(txRef, {
-        'userId': user.userId,
+        'userId': userId,
         'cuentaId': cuentaCorrienteRef.id,
         'descripcion': m['descripcion'],
         'monto': m['monto'],
@@ -57,6 +64,12 @@ class FirestoreService {
     }
 
     await batch.commit();
+  }
+
+  // Método legacy para compatibilidad
+  Future<void> createUserProfile(UserModel user, {String? customNumber}) async {
+    await saveUserProfile(user);
+    await generateInitialData(user.userId, customNumber: customNumber);
   }
 
   Stream<UserModel?> getUser(String uid) {

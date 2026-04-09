@@ -334,7 +334,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                  email: auth.user!.email ?? "demo@mibanco.com",
                  fechaRegistro: DateTime.now(),
                );
-               await firestore.createUserProfile(user);
+               await firestore.saveUserProfile(user);
             },
           ),
           const SizedBox(height: 16),
