@@ -97,7 +97,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   const Text("¿Qué servicio deseas pagar?", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.secondaryBlue)),
                   const SizedBox(height: 20),
                   DropdownButtonFormField<String>(
-                    value: _servicio,
+                    initialValue: _servicio,
                     decoration: InputDecoration(
                       labelText: 'Selecciona Servicio', 
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
@@ -132,7 +132,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   const Text("Origen del pago", style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textGray)),
                   const SizedBox(height: 8),
                   DropdownButtonFormField<CuentaModel>(
-                    value: _cuentaSeleccionada,
+                    initialValue: _cuentaSeleccionada,
                     isExpanded: true,
                     decoration: InputDecoration(
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),

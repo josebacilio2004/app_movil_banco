@@ -115,7 +115,7 @@ class _LoanScreenState extends State<LoanScreen> {
             const Text("¿En cuántos meses deseas pagar?", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.secondaryBlue)),
             const SizedBox(height: 16),
             DropdownButtonFormField<int>(
-              value: _plazo,
+              initialValue: _plazo,
               decoration: InputDecoration(
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 prefixIcon: const Icon(Icons.calendar_today_outlined),

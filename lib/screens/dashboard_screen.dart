@@ -10,7 +10,6 @@ import '../utils/constants.dart';
 import '../widgets/stitch_widgets.dart';
 import 'payment_screen.dart';
 import 'loan_screen.dart';
-import 'transactions_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
