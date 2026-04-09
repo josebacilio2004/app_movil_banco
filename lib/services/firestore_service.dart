@@ -99,4 +99,24 @@ class FirestoreService {
   Future<void> solicitarPrestamo(PrestamoModel prestamo) async {
     await _db.collection('prestamos').add(prestamo.toMap());
   }
+
+  // Buscar email por número de tarjeta/cuenta
+  Future<String?> getEmailByCardNumber(String cardNumber) async {
+    try {
+      final querySnapshot = await _db.collection('cuentas')
+          .where('numero', isEqualTo: cardNumber)
+          .limit(1)
+          .get();
+
+      if (querySnapshot.docs.isEmpty) return null;
+
+      final userId = querySnapshot.docs.first.data()['userId'];
+      final userDoc = await _db.collection('usuarios').doc(userId).get();
+      
+      return userDoc.data()?['email'] as String?;
+    } catch (e) {
+      print("Error searching email by card: $e");
+      return null;
+    }
+  }
 }

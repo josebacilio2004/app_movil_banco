@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../services/firestore_service.dart';
 import '../utils/constants.dart';
 import '../widgets/stitch_widgets.dart';
 import 'login_screen.dart';
@@ -18,6 +20,7 @@ class _IdentificationScreenState extends State<IdentificationScreen> {
   String? _enrolledCard;
   String? _enrolledEmail;
   String? _enrolledName;
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -115,20 +118,43 @@ class _IdentificationScreenState extends State<IdentificationScreen> {
                     const SizedBox(height: 32),
                     StitchButton(
                       text: "Continuar", 
-                      onPressed: () {
-                         String loginEmail = _idController.text.trim();
+                      isLoading: _isLoading,
+                      onPressed: _isLoading ? null : () async {
+                         String query = _idController.text.trim();
+                         if (query.isEmpty) return;
+
+                         setState(() => _isLoading = true);
+                         String? loginEmail;
                          
-                         // Smart Mapping: If input matches enrolled card, use enrolled email
-                         if (_enrolledCard != null && loginEmail == _enrolledCard && _enrolledEmail != null) {
+                         // 1. Verificar coincidencia local (acelerar si es el mismo dispositivo)
+                         if (_enrolledCard != null && query == _enrolledCard && _enrolledEmail != null) {
                            loginEmail = _enrolledEmail!;
-                         } else if (!loginEmail.contains('@')) {
-                           // Fallback logic for demo user if no enrollment matches
-                           if (loginEmail == "1234") { // Demo shortcut
-                             loginEmail = "demo@mibanco.com";
+                         } 
+                         
+                         // 2. Si no coincide localmente, buscar en Firestore
+                         if (loginEmail == null) {
+                           // Si ya es un email, lo usamos directamente
+                           if (query.contains('@')) {
+                             loginEmail = query;
+                           } else {
+                             // Buscar email por tarjeta/cuenta
+                             final firestore = context.read<FirestoreService>();
+                             loginEmail = await firestore.getEmailByCardNumber(query);
                            }
                          }
 
-                         Navigator.push(context, MaterialPageRoute(builder: (_) => LoginScreen(initialEmail: loginEmail)));
+                         if (mounted) setState(() => _isLoading = false);
+
+                         if (loginEmail != null) {
+                           Navigator.push(context, MaterialPageRoute(builder: (_) => LoginScreen(initialEmail: loginEmail)));
+                         } else {
+                           if (mounted) {
+                             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                               content: Text("No se encontró una cuenta asociada a este número"),
+                               backgroundColor: AppColors.errorRed,
+                             ));
+                           }
+                         }
                       },
                     ),
                     

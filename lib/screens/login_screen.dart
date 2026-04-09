@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/auth_service.dart';
+import '../services/firestore_service.dart';
 import '../utils/constants.dart';
 import '../widgets/numeric_keys.dart';
 import 'identification_screen.dart';
@@ -72,13 +73,38 @@ class _LoginScreenState extends State<LoginScreen> {
         _loading = false;
       });
     } else if (mounted) {
-      print("UI: Login exitoso. Forzando navegación al Dashboard...");
-      // Forzar navegación total para evitar el bug de pantalla pegada
-      Navigator.pushAndRemoveUntil(
-        context, 
-        MaterialPageRoute(builder: (_) => const DashboardScreen()),
-        (route) => false
-      );
+      print("UI: Login exitoso. Guardando enrolamiento y navegando...");
+      
+      try {
+        // Guardar enrolamiento para futuras sesiones
+        final firestore = context.read<FirestoreService>();
+        final prefs = await SharedPreferences.getInstance();
+        
+        // Obtener datos del perfil para guardar localmente
+        if (auth.user != null) {
+          final userProfile = await firestore.getUser(auth.user!.uid).first;
+          if (userProfile != null) {
+            await prefs.setString('enrolled_name', userProfile.nombre);
+            await prefs.setString('enrolled_email', userProfile.email);
+            
+            // Intentar obtener el número de tarjeta/cuenta
+            final cuentas = await firestore.getCuentas(auth.user!.uid).first;
+            if (cuentas.isNotEmpty) {
+              await prefs.setString('enrolled_card', cuentas.first.numero);
+            }
+          }
+        }
+      } catch (e) {
+        print("Error al guardar enrolamiento: $e");
+      }
+
+      if (mounted) {
+        Navigator.pushAndRemoveUntil(
+          context, 
+          MaterialPageRoute(builder: (_) => const DashboardScreen()),
+          (route) => false
+        );
+      }
     }
   }
 
