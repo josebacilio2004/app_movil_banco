@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService extends ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -57,6 +58,13 @@ class AuthService extends ChangeNotifier {
   }
 
   Future<void> logout() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.clear(); // Limpiar todo el enrolamiento local
+      print("AUTH: Enrolamiento local eliminado");
+    } catch (e) {
+      print("AUTH ERROR clearing prefs: $e");
+    }
     await _auth.signOut();
     _user = null;
     notifyListeners();

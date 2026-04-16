@@ -121,14 +121,17 @@ class _IdentificationScreenState extends State<IdentificationScreen> {
                       text: "Continuar", 
                       isLoading: _isLoading,
                       onPressed: _isLoading ? null : () async {
-                         String query = _idController.text.trim();
-                         if (query.isEmpty) return;
+                         String rawQuery = _idController.text.trim();
+                         if (rawQuery.isEmpty) return;
+                         
+                         // Normalizar entrada para búsqueda consistente
+                         final query = rawQuery.contains('@') ? rawQuery : rawQuery.replaceAll(RegExp(r'\D'), '');
 
                          setState(() => _isLoading = true);
                          String? loginEmail;
                          
                          // 1. Verificar coincidencia local (acelerar si es el mismo dispositivo)
-                         if (_enrolledCard != null && query == _enrolledCard && _enrolledEmail != null) {
+                         if (_enrolledCard != null && (query == _enrolledCard || query == _enrolledCard?.replaceAll(RegExp(r'\D'), '')) && _enrolledEmail != null) {
                            loginEmail = _enrolledEmail!;
                          } 
                          

@@ -206,6 +206,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
               _buildProfileItem(Icons.security_outlined, "Privacidad y Seguridad", () {}),
               _buildProfileItem(Icons.help_outline_rounded, "Centro de Ayuda", () {}),
               const Divider(height: 40),
+              _buildProfileItem(
+                Icons.restore_from_trash_rounded, 
+                "REINICIAR TODO EL SISTEMA", 
+                () async {
+                  final confirm = await showDialog<bool>(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: const Text("Limpieza Total"),
+                      content: const Text("Esto borrará todos tus datos en la nube y cerrará la sesión. ¿Estás seguro?"),
+                      actions: [
+                        TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("Cancelar")),
+                        TextButton(onPressed: () => Navigator.pop(context, true), child: const Text("BORRAR TODO", style: TextStyle(color: AppColors.errorRed))),
+                      ],
+                    ),
+                  );
+
+                  if (confirm == true) {
+                    final firestore = context.read<FirestoreService>();
+                    await firestore.wipeAllData();
+                    await auth.logout();
+                  }
+                }, 
+                color: AppColors.primaryRed
+              ),
               _buildProfileItem(Icons.logout_rounded, "Cerrar Sesión", () => auth.logout(), color: AppColors.errorRed),
             ],
           ),

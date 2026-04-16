@@ -135,34 +135,44 @@ class FirestoreService {
   Future<String?> getEmailByCardNumber(String cardNumber) async {
     try {
       final normalized = _normalize(cardNumber);
+      print("SEARCH: Buscando email para tarjeta normalizada: $normalized");
+      
       final querySnapshot = await _db.collection('cuentas')
           .where('numero', isEqualTo: normalized)
           .limit(1)
           .get();
 
       if (querySnapshot.docs.isEmpty) {
-        // Fallback: Try searching with exact input if normalization changed it
-        if (normalized != cardNumber) {
-          final exactQuery = await _db.collection('cuentas')
-              .where('numero', isEqualTo: cardNumber)
-              .limit(1)
-              .get();
-          if (exactQuery.docs.isNotEmpty) {
-            final userId = exactQuery.docs.first.data()['userId'];
-            final userDoc = await _db.collection('usuarios').doc(userId).get();
-            return userDoc.data()?['email'] as String?;
-          }
-        }
+        print("SEARCH: No se encontró la tarjeta $normalized");
         return null;
       }
 
       final userId = querySnapshot.docs.first.data()['userId'];
       final userDoc = await _db.collection('usuarios').doc(userId).get();
       
-      return userDoc.data()?['email'] as String?;
+      final email = userDoc.data()?['email'] as String?;
+      print("SEARCH: Email encontrado: $email");
+      return email;
     } catch (e) {
       print("Error searching email by card: $e");
       return null;
     }
+  }
+
+  // LIMPIEZA TOTAL: Borra todos los datos de las colecciones principales
+  Future<void> wipeAllData() async {
+    print("WIPE: Iniciando limpieza total de base de datos...");
+    final collections = ['usuarios', 'cuentas', 'transacciones', 'prestamos'];
+    
+    for (var collName in collections) {
+      final snapshot = await _db.collection(collName).get();
+      final batch = _db.batch();
+      for (var doc in snapshot.docs) {
+        batch.delete(doc.reference);
+      }
+      await batch.commit();
+      print("WIPE: Colección $collName eliminada.");
+    }
+    print("WIPE: Limpieza completada con éxito.");
   }
 }
