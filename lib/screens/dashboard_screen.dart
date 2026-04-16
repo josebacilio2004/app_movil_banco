@@ -364,8 +364,42 @@ Widget _itemInfo(String titulo, String valor) {
               }),
               const SizedBox(width: 12),
               _buildIconButton(Icons.help_outline_rounded, AppColors.primaryRed, () {
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Centro de Ayuda MiBCP")));
-              }),
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  title: Row(
+                    children: const [
+                      Icon(Icons.help_outline, color: AppColors.primaryRed),
+                      SizedBox(width: 8),
+                      Text("Centro de Ayuda"),
+                    ],
+                  ),
+                  content: const Text(
+                    "Bienvenido a MiBanco \n\n"
+                    "Aquí puedes:\n\n"
+                    "• Solicitar préstamos\n"
+                    "• Ver tus operaciones\n"
+                    "• Revisar tu banca\n\n"
+                    "Usa el menú inferior para navegar.",
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text(
+                        "ENTENDIDO",
+                        style: TextStyle(
+                          color: AppColors.primaryRed,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
             ],
           )
         ],
