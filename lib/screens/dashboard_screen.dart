@@ -359,9 +359,106 @@ Widget _itemInfo(String titulo, String valor) {
           ),
           Row(
             children: [
-              _buildIconButton(Icons.notifications_none_rounded, AppColors.secondaryBlue, () {
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("No tienes notificaciones nuevas")));
-              }),
+              StreamBuilder<List<PrestamoModel>>(
+  stream: context.read<FirestoreService>().getPrestamos(context.read<AuthService>().user!.uid),
+  builder: (context, snapshot) {
+
+    int count = snapshot.data?.length ?? 0;
+
+    return Stack(
+      children: [
+          _buildIconButton(
+            Icons.notifications_none_rounded,
+            AppColors.secondaryBlue,
+            () {
+              final auth = context.read<AuthService>();
+              final firestore = context.read<FirestoreService>();
+
+              showModalBottomSheet(
+                context: context,
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                ),
+                builder: (context) {
+                  return Container(
+                    padding: const EdgeInsets.all(16),
+                    height: 400,
+                    child: Column(
+                      children: [
+                        const Text(
+                          "Notificaciones",
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 16),
+
+                        Expanded(
+                          child: StreamBuilder<List<PrestamoModel>>(
+                            stream: firestore.getPrestamos(auth.user!.uid),
+                            builder: (context, snapshot) {
+
+                              if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                                return const Center(
+                                  child: Text("No tienes notificaciones"),
+                                );
+                              }
+
+                              final prestamos = snapshot.data!;
+
+                              return ListView.builder(
+                                itemCount: prestamos.length,
+                                itemBuilder: (context, index) {
+                                  final p = prestamos[index];
+
+                                  return ListTile(
+                                    leading: const Icon(Icons.notifications, color: Colors.orange),
+                                    title: const Text("Solicitud enviada"),
+                                    subtitle: Text(
+                                      "Tu préstamo de S/ ${p.monto} fue registrado\n"
+                                      "Estado actual: ${p.estado == 'pendiente' ? 'En evaluación' : p.estado}",
+                                    ),
+                                  );
+                                },
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+
+          if (count > 0)
+            Positioned(
+              right: 0,
+              top: 0,
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: const BoxDecoration(
+                  color: Colors.red,
+                  shape: BoxShape.circle,
+                ),
+                constraints: const BoxConstraints(
+                  minWidth: 18,
+                  minHeight: 18,
+                ),
+                child: Text(
+                  count.toString(),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
+        ],
+      );
+    },
+  ),
               const SizedBox(width: 12),
               _buildIconButton(Icons.help_outline_rounded, AppColors.primaryRed, () {
               showDialog(
