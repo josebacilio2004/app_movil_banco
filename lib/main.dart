@@ -55,35 +55,16 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class AuthWrapper extends StatefulWidget {
+class AuthWrapper extends StatelessWidget {
   const AuthWrapper({super.key});
 
-  @override
-  State<AuthWrapper> createState() => _AuthWrapperState();
-}
-
-class _AuthWrapperState extends State<AuthWrapper> {
-  bool _initialized = false;
-  String? _enrolledEmail;
-
-  @override
-  void initState() {
-    super.initState();
-    _checkEnrollment();
-  }
-
-  Future<void> _checkEnrollment() async {
+  Future<String?> _getEnrolledEmail() async {
     final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _enrolledEmail = prefs.getString('enrolled_email');
-      _initialized = true;
-    });
+    return prefs.getString('enrolled_email');
   }
 
   @override
   Widget build(BuildContext context) {
-    if (!_initialized) return const Scaffold(body: Center(child: CircularProgressIndicator()));
-
     final auth = Provider.of<AuthService>(context);
     
     // 1. Si ya hay sesión activa en Firebase y NO es anónima -> Dashboard
@@ -91,12 +72,22 @@ class _AuthWrapperState extends State<AuthWrapper> {
       return const DashboardScreen();
     }
     
-    // 2. Si hay un usuario registrado localmente -> Directo al PIN
-    if (_enrolledEmail != null) {
-      return LoginScreen(initialEmail: _enrolledEmail!);
-    }
-    
-    // 3. Fallback: Primer ingreso -> Tarjeta (Identificación)
-    return const IdentificationScreen();
+    // 2. Si no hay sesión, verificamos enrolamiento local dinámicamente
+    return FutureBuilder<String?>(
+      future: _getEnrolledEmail(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(body: Center(child: CircularProgressIndicator()));
+        }
+        
+        final enrolledEmail = snapshot.data;
+        if (enrolledEmail != null) {
+          return LoginScreen(initialEmail: enrolledEmail);
+        }
+        
+        // 3. Fallback: Primer ingreso -> Tarjeta (Identificación)
+        return const IdentificationScreen();
+      }
+    );
   }
 }

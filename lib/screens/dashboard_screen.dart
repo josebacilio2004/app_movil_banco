@@ -23,7 +23,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final auth = context.read<AuthService>();
+    final auth = context.watch<AuthService>();
     final firestore = context.read<FirestoreService>();
 
     if (auth.user == null) {
@@ -35,12 +35,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
       body: SafeArea(
         bottom: false,
         child: StreamBuilder<UserModel?>(
-          stream: firestore.getUser(auth.user!.uid),
+          stream: auth.user != null ? firestore.getUser(auth.user!.uid) : const Stream.empty(),
           builder: (context, userSnap) {
-            // Seguridad Nivel 2: Si el usuario es anónimo, no permitir ver Dashboard
-            if (auth.user!.isAnonymous) {
-              Future.microtask(() => auth.logout());
-              return const Center(child: Text("Sesión no autorizada"));
+            // Seguridad Nivel 2: Si el usuario es nulo o anónimo, no permitir ver Dashboard
+            if (auth.user == null || auth.user!.isAnonymous) {
+              if (auth.user?.isAnonymous == true) {
+                Future.microtask(() => auth.logout());
+              }
+              return const Center(child: CircularProgressIndicator());
             }
 
             if (userSnap.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
@@ -296,7 +298,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return StreamBuilder<List<CuentaModel>>(
       stream: firestore.getCuentas(user.userId),
       builder: (context, snap) {
-        if (!snap.hasData || snap.data!.isEmpty) return const SizedBox(height: 200, child: Center(child: CircularProgressIndicator()));
+        if (!snap.hasData || snap.data == null || snap.data!.isEmpty) return const SizedBox(height: 200, child: Center(child: CircularProgressIndicator()));
         final mainAcc = snap.data!.firstWhere((a) => a.tipo == 'corriente', orElse: () => snap.data!.first);
         return StitchCard(
           title: "Saldo Disponible",
