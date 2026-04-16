@@ -231,6 +231,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 color: AppColors.primaryRed
               ),
               _buildProfileItem(Icons.logout_rounded, "Cerrar Sesión", () => auth.logout(), color: AppColors.errorRed),
+              const SizedBox(height: 120), // Espacio para el BottomNav
             ],
           ),
         ),
