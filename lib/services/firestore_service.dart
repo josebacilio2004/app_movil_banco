@@ -9,6 +9,21 @@ class FirestoreService {
  
   String _normalize(String value) => value.replaceAll(RegExp(r'\D'), '');
 
+  // Reparación inteligente: Crea el perfil solo si las cuentas ya existen
+  Future<void> checkAndRepairUserProfile(UserModel user) async {
+    final accountsQuery = await _db.collection('cuentas').where('userId', isEqualTo: user.userId).limit(1).get();
+    
+    if (accountsQuery.docs.isNotEmpty) {
+      // Las cuentas ya existen, solo creamos el documento de usuario
+      print("REPAIR: Cuentas detectadas, vinculando perfil para ${user.userId}");
+      await saveUserProfile(user);
+    } else {
+      // No hay nada, creamos todo desde cero
+      print("REPAIR: No se detectaron cuentas, realizando creación completa");
+      await createUserProfile(user);
+    }
+  }
+
   // Guardar perfil de usuario (sin tocar cuentas)
   Future<void> saveUserProfile(UserModel user) async {
     await _db.collection('usuarios').doc(user.userId).set(user.toMap());
@@ -66,7 +81,7 @@ class FirestoreService {
     await batch.commit();
   }
 
-  // Método legacy para compatibilidad
+  // Crear perfil de usuario y cuentas demo
   Future<void> createUserProfile(UserModel user, {String? customNumber}) async {
     await saveUserProfile(user);
     await generateInitialData(user.userId, customNumber: customNumber);

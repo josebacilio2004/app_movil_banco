@@ -10,7 +10,6 @@ import '../utils/constants.dart';
 import '../widgets/stitch_widgets.dart';
 import 'payment_screen.dart';
 import 'loan_screen.dart';
-import 'transactions_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -27,6 +26,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final auth = context.read<AuthService>();
     final firestore = context.read<FirestoreService>();
 
+    if (auth.user == null) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -34,41 +37,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: StreamBuilder<UserModel?>(
           stream: firestore.getUser(auth.user!.uid),
           builder: (context, userSnap) {
+            // Seguridad Nivel 2: Si el usuario es anónimo, no permitir ver Dashboard
+            if (auth.user!.isAnonymous) {
+              Future.microtask(() => auth.logout());
+              return const Center(child: Text("Sesión no autorizada"));
+            }
+
             if (userSnap.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
+            
+            // Si no hay datos de usuario, mostramos el estado de error (reparación)
             if (!userSnap.hasData || userSnap.data == null) return _buildErrorState(auth, firestore);
             
             final user = userSnap.data!;
 
             return Stack(
               children: [
-                Column(
+                IndexedStack(
+                  index: _navIndex,
                   children: [
-                    _buildTopBar(user, auth),
-                    Expanded(
-                      child: RefreshIndicator(
-                        onRefresh: () async => {},
-                        child: SingleChildScrollView(
-                          physics: const BouncingScrollPhysics(),
-                          padding: const EdgeInsets.symmetric(horizontal: 24),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const SizedBox(height: 16),
-                              _buildMainAccount(firestore, user),
-                              const SizedBox(height: 32),
-                              _buildQuickOperations(),
-                              const SizedBox(height: 32),
-                              _buildRecentActivityHeader(),
-                              const SizedBox(height: 16),
-                              _buildRecentActivityList(firestore, user),
-                              const SizedBox(height: 32),
-                              _buildSavingsPromo(),
-                              const SizedBox(height: 120), // Space for bottom nav
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
+                    _buildHomeView(user, auth, firestore),
+                    _buildOperationsView(),
+                    _buildBankView(),
+                    _buildProfileView(user, auth),
                   ],
                 ),
                 Positioned(
@@ -88,6 +78,153 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  // --- VISTAS DEL INDEXED STACK ---
+
+  Widget _buildHomeView(UserModel user, AuthService auth, FirestoreService firestore) {
+    return Column(
+      children: [
+        _buildTopBar(user, auth),
+        Expanded(
+          child: RefreshIndicator(
+            onRefresh: () async => setState(() {}),
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 16),
+                  _buildMainAccount(firestore, user),
+                  const SizedBox(height: 32),
+                  _buildQuickOperations(),
+                  const SizedBox(height: 32),
+                  _buildRecentActivityHeader(),
+                  const SizedBox(height: 16),
+                  _buildRecentActivityList(firestore, user),
+                  const SizedBox(height: 32),
+                  _buildSavingsPromo(),
+                  const SizedBox(height: 120), // Espacio para el BottomNav
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildOperationsView() {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(24),
+          alignment: Alignment.centerLeft,
+          child: Text("PAGOS Y OPERACIONES", style: AppStyles.headline(size: 24)),
+        ),
+        Expanded(
+          child: ListView(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            children: [
+              _buildOpListTile("Pagar Servicios", Icons.receipt_long_rounded, "Luz, Agua, Teléfono, etc.", () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PaymentScreen()))),
+              _buildOpListTile("Transferencias", Icons.sync_alt_rounded, "A cuentas propias y terceros", () {}),
+              _buildOpListTile("Recarga de Celular", Icons.phone_iphone_rounded, "Movistar, Claro, Entel, Bitel", () {}),
+              _buildOpListTile("Giros Nacionales", Icons.local_atm_rounded, "Envía dinero para retiro en cajero", () {}),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildOpListTile(String title, IconData icon, String subtitle, VoidCallback onTap) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))]
+      ),
+      child: ListTile(
+        contentPadding: const EdgeInsets.all(16),
+        leading: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(color: AppColors.containerLow, shape: BoxShape.circle),
+          child: Icon(icon, color: AppColors.primaryRed),
+        ),
+        title: Text(title, style: AppStyles.body(weight: FontWeight.bold, size: 16)),
+        subtitle: Text(subtitle, style: AppStyles.body(size: 12, color: AppColors.textGray)),
+        trailing: const Icon(Icons.chevron_right, color: AppColors.outline),
+        onTap: onTap,
+      ),
+    );
+  }
+
+  Widget _buildBankView() {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(24),
+          alignment: Alignment.centerLeft,
+          child: Text("MI BANCA", style: AppStyles.headline(size: 24)),
+        ),
+        Expanded(
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.account_balance_outlined, size: 80, color: AppColors.outline),
+                const SizedBox(height: 16),
+                Text("Cuentas y Productos", style: AppStyles.headline(size: 20)),
+                const SizedBox(height: 8),
+                const Text("Aquí verás el detalle de tus préstamos y seguros."),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildProfileView(UserModel user, AuthService auth) {
+    return Column(
+      children: [
+        const SizedBox(height: 60),
+        const CircleAvatar(
+          radius: 50,
+          backgroundColor: AppColors.containerLow,
+          child: Icon(Icons.person, size: 60, color: AppColors.secondaryBlue),
+        ),
+        const SizedBox(height: 16),
+        Text(user.nombre, style: AppStyles.headline(size: 24)),
+        Text(user.email, style: AppStyles.body(color: AppColors.textGray)),
+        const SizedBox(height: 32),
+        Expanded(
+          child: ListView(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            children: [
+              _buildProfileItem(Icons.settings_outlined, "Configuración", () {}),
+              _buildProfileItem(Icons.security_outlined, "Privacidad y Seguridad", () {}),
+              _buildProfileItem(Icons.help_outline_rounded, "Centro de Ayuda", () {}),
+              const Divider(height: 40),
+              _buildProfileItem(Icons.logout_rounded, "Cerrar Sesión", () => auth.logout(), color: AppColors.errorRed),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildProfileItem(IconData icon, String title, VoidCallback onTap, {Color? color}) {
+    return ListTile(
+      leading: Icon(icon, color: color ?? AppColors.secondaryBlue),
+      title: Text(title, style: AppStyles.body(weight: FontWeight.w600, color: color ?? AppColors.onSurface)),
+      trailing: const Icon(Icons.chevron_right, size: 18),
+      onTap: onTap,
+    );
+  }
+
+  // --- COMPONENTES DEL DASHBOARD ---
+
   Widget _buildTopBar(UserModel user, AuthService auth) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
@@ -103,11 +240,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
           Row(
             children: [
-              _buildIconButton(Icons.notifications_none_rounded, AppColors.secondaryBlue, () {}),
+              _buildIconButton(Icons.notifications_none_rounded, AppColors.secondaryBlue, () {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("No tienes notificaciones nuevas")));
+              }),
               const SizedBox(width: 12),
-              _buildIconButton(Icons.help_outline_rounded, AppColors.primaryRed, () {}),
-              const SizedBox(width: 12),
-              _buildIconButton(Icons.logout_rounded, AppColors.secondaryBlue, () => auth.logout()),
+              _buildIconButton(Icons.help_outline_rounded, AppColors.primaryRed, () {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Centro de Ayuda MiBCP")));
+              }),
             ],
           )
         ],
@@ -132,12 +271,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return StreamBuilder<List<CuentaModel>>(
       stream: firestore.getCuentas(user.userId),
       builder: (context, snap) {
-        if (!snap.hasData || snap.data!.isEmpty) return const SizedBox(height: 200);
+        if (!snap.hasData || snap.data!.isEmpty) return const SizedBox(height: 200, child: Center(child: CircularProgressIndicator()));
         final mainAcc = snap.data!.firstWhere((a) => a.tipo == 'corriente', orElse: () => snap.data!.first);
         return StitchCard(
           title: "Saldo Disponible",
           amount: "S/ ${NumberFormat("#,##0.00").format(mainAcc.saldo)}",
-          number: "**** **** **** ${mainAcc.numero.replaceAll(RegExp(r'[\*\s]'), '').padLeft(4, '0')}",
+          number: "**** **** **** ${mainAcc.numero.length > 4 ? mainAcc.numero.substring(mainAcc.numero.length - 4) : '0000'}",
           holder: user.nombre,
         );
       }
@@ -328,13 +467,29 @@ class _DashboardScreenState extends State<DashboardScreen> {
           StitchButton(
             text: "REPARAR Y ACTIVAR CUENTA", 
             onPressed: () async {
-               final user = UserModel(
-                 userId: auth.user!.uid,
-                 nombre: "Usuario MiBCP",
-                 email: auth.user!.email ?? "demo@mibanco.com",
-                 fechaRegistro: DateTime.now(),
-               );
-               await firestore.saveUserProfile(user);
+               try {
+                 print("REPAIR: Iniciando reparación inteligente para ${auth.user!.uid}");
+                 final user = UserModel(
+                   userId: auth.user!.uid,
+                   nombre: "Usuario MiBCP", 
+                   email: auth.user!.email ?? "demo@mibanco.com",
+                   fechaRegistro: DateTime.now(),
+                 );
+                 // Usamos la nueva lógica que verifica si las cuentas ya existen
+                 await firestore.checkAndRepairUserProfile(user);
+                 print("REPAIR: Proceso de reparación finalizado");
+                 if (mounted) {
+                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                     content: Text("¡Cuenta recuperada exitosamente!"),
+                     backgroundColor: AppColors.successGreen,
+                   ));
+                 }
+               } catch (e) {
+                 print("REPAIR ERROR: $e");
+                 if (mounted) {
+                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error en reparación: $e")));
+                 }
+               }
             },
           ),
           const SizedBox(height: 16),

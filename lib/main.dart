@@ -82,8 +82,8 @@ class _AuthWrapperState extends State<AuthWrapper> {
 
     final auth = Provider.of<AuthService>(context);
     
-    // 1. Si ya hay sesión activa en Firebase -> Dashboard
-    if (auth.user != null) {
+    // 1. Si ya hay sesión activa en Firebase y NO es anónima -> Dashboard
+    if (auth.user != null && !auth.user!.isAnonymous) {
       return const DashboardScreen();
     }
     

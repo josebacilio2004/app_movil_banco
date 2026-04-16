@@ -61,7 +61,7 @@ class AccountCard extends StatelessWidget {
             Text(
               fmt.format(cuenta.saldo),
               style: TextStyle(
-                color: isAhorro ? Colors.white : AppColors.textBlack,
+                color: isAhorro ? Colors.white : AppColors.onSurface,
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
               ),
