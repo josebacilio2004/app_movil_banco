@@ -39,4 +39,14 @@ class CuentaModel {
       'progresoAhorro': progresoAhorro,
     };
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is CuentaModel &&
+          runtimeType == other.runtimeType &&
+          cuentaId == other.cuentaId;
+
+  @override
+  int get hashCode => cuentaId.hashCode;
 }
