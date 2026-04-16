@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mibanco/models/prestamo.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../services/auth_service.dart';
@@ -160,31 +161,149 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildBankView() {
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(24),
-          alignment: Alignment.centerLeft,
-          child: Text("MI BANCA", style: AppStyles.headline(size: 24)),
-        ),
-        Expanded(
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.account_balance_outlined, size: 80, color: AppColors.outline),
-                const SizedBox(height: 16),
-                Text("Cuentas y Productos", style: AppStyles.headline(size: 20)),
-                const SizedBox(height: 8),
-                const Text("Aquí verás el detalle de tus préstamos y seguros."),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
+  final auth = context.read<AuthService>();
+  final firestore = context.read<FirestoreService>();
 
+  return Column(
+    children: [
+      Container(
+        padding: const EdgeInsets.all(24),
+        alignment: Alignment.centerLeft,
+        child: Text("MI BANCA", style: AppStyles.headline(size: 24)),
+      ),
+
+      Expanded(
+        child: StreamBuilder<List<PrestamoModel>>(
+          stream: firestore.getPrestamos(auth.user!.uid),
+          builder: (context, snapshot) {
+
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            if (!snapshot.hasData || snapshot.data!.isEmpty) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.account_balance_wallet_outlined,
+                        size: 60, color: AppColors.textGray),
+                    const SizedBox(height: 12),
+                    const Text(
+                      "No tienes préstamos registrados",
+                      style: TextStyle(color: AppColors.textGray),
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            final prestamos = snapshot.data!;
+
+            return ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: prestamos.length,
+              itemBuilder: (context, index) {
+                final p = prestamos[index];
+
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    gradient: LinearGradient(
+                      colors: [
+                        AppColors.primaryRed,
+                        AppColors.primaryRed.withOpacity(0.85)
+                      ],
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primaryRed.withOpacity(0.2),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      )
+                    ],
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+
+                        
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              "Préstamo activo",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Icon(Icons.account_balance,
+                                color: Colors.white.withOpacity(0.9)),
+                          ],
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        
+                        Text(
+                          "S/ ${p.monto.toStringAsFixed(0)}",
+                          style: const TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            _itemInfo("Cuota", "S/ ${p.cuotaMensual.toStringAsFixed(2)}"),
+                            _itemInfo("Plazo", "${p.plazo} m"),
+                            _itemInfo("Estado", p.estado),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            );
+          },
+        ),
+      ),
+    ],
+  );
+}
+
+Widget _itemInfo(String titulo, String valor) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        titulo,
+        style: TextStyle(
+          color: Colors.white.withOpacity(0.7),
+          fontSize: 12,
+        ),
+      ),
+      const SizedBox(height: 4),
+      Text(
+        valor,
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    ],
+  );
+}
   Widget _buildProfileView(UserModel user, AuthService auth) {
     return Column(
       children: [
