@@ -8,6 +8,7 @@ import 'services/firestore_service.dart';
 import 'screens/identification_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/dashboard_screen.dart';
+import 'screens/solicitud_credito_screen.dart';
 import 'utils/constants.dart';
 
 void main() async {
@@ -46,6 +47,9 @@ class MyApp extends StatelessWidget {
           ),
         ),
         home: const AuthWrapper(),
+        routes: {
+          "solicitud_credito": (context) => const SolicitudCreditoScreen(),
+        },
       ),
     );
   }

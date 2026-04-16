@@ -313,20 +313,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
       children: [
         Text("OPERACIONES RÁPIDAS", style: AppStyles.body(size: 12, weight: FontWeight.bold, color: AppColors.secondaryBlue).copyWith(letterSpacing: 1)),
         const SizedBox(height: 20),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            _buildOpItem("Transferir", Icons.sync_alt_rounded, () {}),
-            _buildOpItem("Pagar", Icons.receipt_long_rounded, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PaymentScreen()))),
-            _buildOpItem("Recargar", Icons.phone_iphone_rounded, () {}),
-            _buildOpItem("Préstamos", Icons.monetization_on_rounded, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LoanScreen()))),
-          ],
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          physics: const BouncingScrollPhysics(),
+          child: Row(
+            children: [
+              _buildOpItem("Transferir", Icons.sync_alt_rounded, () {}),
+              const SizedBox(width: 20),
+              _buildOpItem("Pagar", Icons.receipt_long_rounded, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PaymentScreen()))),
+              const SizedBox(width: 20),
+              _buildOpItem("Recargar", Icons.phone_iphone_rounded, () {}),
+              const SizedBox(width: 20),
+              _buildOpItem("Préstamos", Icons.monetization_on_rounded, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LoanScreen()))),
+              const SizedBox(width: 20),
+              _buildOpItem("Crédito", Icons.request_page, () => Navigator.pushNamed(context, "solicitud_credito"), color: AppColors.successGreen),
+            ],
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildOpItem(String label, IconData icon, VoidCallback onTap) {
+  Widget _buildOpItem(String label, IconData icon, VoidCallback onTap, {Color? color}) {
     return InkWell(
       onTap: onTap,
       child: Column(
@@ -335,7 +343,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             width: 64,
             height: 64,
             decoration: BoxDecoration(color: AppColors.containerLow, borderRadius: BorderRadius.circular(20)),
-            child: Icon(icon, color: AppColors.primaryRed, size: 28),
+            child: Icon(icon, color: color ?? AppColors.primaryRed, size: 28),
           ),
           const SizedBox(height: 8),
           Text(label, style: AppStyles.body(size: 11, weight: FontWeight.w600, color: AppColors.secondaryBlue)),
