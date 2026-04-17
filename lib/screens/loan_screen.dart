@@ -28,6 +28,7 @@ class _LoanScreenState extends State<LoanScreen> {
     setState(() => _loading = true);
     final auth = context.read<AuthService>();
     final firestore = context.read<FirestoreService>();
+    if (auth.user == null) return;
 
     final prestamo = PrestamoModel(
       prestamoId: '',
@@ -72,6 +73,15 @@ class _LoanScreenState extends State<LoanScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Usamos watch para reaccionar al logout y redibujar si el usuario es null
+    final auth = context.watch<AuthService>();
+    final currentUser = auth.user;
+
+    // Si no hay sesión, retornamos cargando mientras el Navigator actúa
+    if (currentUser == null) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(

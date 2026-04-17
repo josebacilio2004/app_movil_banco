@@ -38,6 +38,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
     setState(() => _loading = true);
     final firestore = context.read<FirestoreService>();
     final auth = context.read<AuthService>();
+    if (auth.user == null) return;
 
     final tx = TransaccionModel(
       transaccionId: '',
@@ -67,8 +68,15 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final auth = context.read<AuthService>();
+    // Usamos watch para reaccionar al logout y redibujar si el usuario es null
+    final auth = context.watch<AuthService>();
     final firestore = context.read<FirestoreService>();
+    final currentUser = auth.user;
+
+    // Si no hay sesión, retornamos cargando mientras el Navigator actúa
+    if (currentUser == null) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -78,7 +86,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
         foregroundColor: Colors.white,
       ),
       body: StreamBuilder<List<CuentaModel>>(
-        stream: firestore.getCuentas(auth.user!.uid),
+        stream: firestore.getCuentas(currentUser.uid),
         builder: (context, snap) {
           if (snap.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
           

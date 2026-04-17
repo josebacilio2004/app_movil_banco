@@ -23,11 +23,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final auth = context.read<AuthService>();
+    // Usamos watch para reaccionar inmediatamente al cambio de sesión (logout)
+    final auth = context.watch<AuthService>();
     final firestore = context.read<FirestoreService>();
+    final currentUser = auth.user;
 
-    if (auth.user == null) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    // Si no hay usuario, retornamos un estado vacío mientras AuthWrapper redirige
+    if (currentUser == null) {
+      return const SizedBox.shrink();
     }
 
     return Scaffold(
@@ -35,18 +38,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
       body: SafeArea(
         bottom: false,
         child: StreamBuilder<UserModel?>(
-          stream: firestore.getUser(auth.user!.uid),
+          stream: currentUser != null ? firestore.getUser(currentUser.uid) : Stream.value(null),
           builder: (context, userSnap) {
+            // Seguridad Extra: Si el usuario desaparece durante el build, salimos
+            if (currentUser == null) return const Scaffold(backgroundColor: AppColors.background);
+
             // Seguridad Nivel 2: Si el usuario es anónimo, no permitir ver Dashboard
-            if (auth.user!.isAnonymous) {
+            if (currentUser.isAnonymous) {
               Future.microtask(() => auth.logout());
               return const Center(child: Text("Sesión no autorizada"));
             }
 
-            if (userSnap.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
+            if (userSnap.connectionState == ConnectionState.waiting) {
+              return const Scaffold(backgroundColor: AppColors.background);
+            }
             
             // Si no hay datos de usuario, mostramos el estado de error (reparación)
-            if (!userSnap.hasData || userSnap.data == null) return _buildErrorState(auth, firestore);
+            if (!userSnap.hasData || userSnap.data == null) {
+              return _buildErrorState(auth, firestore, currentUser.uid, currentUser.email);
+            }
             
             final user = userSnap.data!;
 
@@ -206,7 +216,32 @@ class _DashboardScreenState extends State<DashboardScreen> {
               _buildProfileItem(Icons.security_outlined, "Privacidad y Seguridad", () {}),
               _buildProfileItem(Icons.help_outline_rounded, "Centro de Ayuda", () {}),
               const Divider(height: 40),
+              _buildProfileItem(
+                Icons.restore_from_trash_rounded, 
+                "REINICIAR TODO EL SISTEMA", 
+                () async {
+                  final confirm = await showDialog<bool>(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: const Text("Limpieza Total"),
+                      content: const Text("Esto borrará todos tus datos en la nube y cerrará la sesión. ¿Estás seguro?"),
+                      actions: [
+                        TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("Cancelar")),
+                        TextButton(onPressed: () => Navigator.pop(context, true), child: const Text("BORRAR TODO", style: TextStyle(color: AppColors.errorRed))),
+                      ],
+                    ),
+                  );
+
+                  if (confirm == true) {
+                    final firestore = context.read<FirestoreService>();
+                    await firestore.wipeAllData();
+                    await auth.logout();
+                  }
+                }, 
+                color: AppColors.primaryRed
+              ),
               _buildProfileItem(Icons.logout_rounded, "Cerrar Sesión", () => auth.logout(), color: AppColors.errorRed),
+              const SizedBox(height: 120), // Espacio para el BottomNav
             ],
           ),
         ),
@@ -271,7 +306,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return StreamBuilder<List<CuentaModel>>(
       stream: firestore.getCuentas(user.userId),
       builder: (context, snap) {
-        if (!snap.hasData || snap.data!.isEmpty) return const SizedBox(height: 200, child: Center(child: CircularProgressIndicator()));
+        if (!snap.hasData || snap.data == null || snap.data!.isEmpty) return const SizedBox(height: 100);
         final mainAcc = snap.data!.firstWhere((a) => a.tipo == 'corriente', orElse: () => snap.data!.first);
         return StitchCard(
           title: "Saldo Disponible",
@@ -289,20 +324,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
       children: [
         Text("OPERACIONES RÁPIDAS", style: AppStyles.body(size: 12, weight: FontWeight.bold, color: AppColors.secondaryBlue).copyWith(letterSpacing: 1)),
         const SizedBox(height: 20),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            _buildOpItem("Transferir", Icons.sync_alt_rounded, () {}),
-            _buildOpItem("Pagar", Icons.receipt_long_rounded, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PaymentScreen()))),
-            _buildOpItem("Recargar", Icons.phone_iphone_rounded, () {}),
-            _buildOpItem("Préstamos", Icons.monetization_on_rounded, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LoanScreen()))),
-          ],
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          physics: const BouncingScrollPhysics(),
+          child: Row(
+            children: [
+              _buildOpItem("Transferir", Icons.sync_alt_rounded, () {}),
+              const SizedBox(width: 20),
+              _buildOpItem("Pagar", Icons.receipt_long_rounded, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PaymentScreen()))),
+              const SizedBox(width: 20),
+              _buildOpItem("Recargar", Icons.phone_iphone_rounded, () {}),
+              const SizedBox(width: 20),
+              _buildOpItem("Préstamos", Icons.monetization_on_rounded, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LoanScreen()))),
+              const SizedBox(width: 20),
+              _buildOpItem("Crédito", Icons.request_page, () => Navigator.pushNamed(context, "solicitud_credito"), color: AppColors.successGreen),
+            ],
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildOpItem(String label, IconData icon, VoidCallback onTap) {
+  Widget _buildOpItem(String label, IconData icon, VoidCallback onTap, {Color? color}) {
     return InkWell(
       onTap: onTap,
       child: Column(
@@ -311,7 +354,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             width: 64,
             height: 64,
             decoration: BoxDecoration(color: AppColors.containerLow, borderRadius: BorderRadius.circular(20)),
-            child: Icon(icon, color: AppColors.primaryRed, size: 28),
+            child: Icon(icon, color: color ?? AppColors.primaryRed, size: 28),
           ),
           const SizedBox(height: 8),
           Text(label, style: AppStyles.body(size: 11, weight: FontWeight.w600, color: AppColors.secondaryBlue)),
@@ -339,7 +382,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return StreamBuilder<List<TransaccionModel>>(
       stream: firestore.getTransacciones(user.userId),
       builder: (context, snap) {
-        if (!snap.hasData) return const Center(child: CircularProgressIndicator());
+        if (!snap.hasData) return const SizedBox.shrink();
         final txs = snap.data!.take(3).toList();
         if (txs.isEmpty) return const Text("No hay movimientos recientes");
         
@@ -447,7 +490,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildErrorState(AuthService auth, FirestoreService firestore) {
+  Widget _buildErrorState(AuthService auth, FirestoreService firestore, String uid, String? email) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -468,11 +511,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
             text: "REPARAR Y ACTIVAR CUENTA", 
             onPressed: () async {
                try {
-                 print("REPAIR: Iniciando reparación inteligente para ${auth.user!.uid}");
+                 print("REPAIR: Iniciando reparación inteligente para $uid");
                  final user = UserModel(
-                   userId: auth.user!.uid,
+                   userId: uid,
                    nombre: "Demo10", // Usamos el nombre detectado por el usuario
-                   email: auth.user!.email ?? "demo10@demo.com",
+                   email: email ?? "demo10@demo.com",
                    fechaRegistro: DateTime.now(),
                  );
                  // Usamos la nueva lógica que verifica si las cuentas ya existen

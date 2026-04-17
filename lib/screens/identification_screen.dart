@@ -58,7 +58,11 @@ class _IdentificationScreenState extends State<IdentificationScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   IconButton(
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: () {
+                      if (Navigator.canPop(context)) {
+                        Navigator.pop(context);
+                      }
+                    },
                     icon: const Icon(Icons.arrow_back, color: AppColors.primaryRed),
                   ),
                   Text("MiBCP", style: AppStyles.headline(size: 24, color: AppColors.primaryRed).copyWith(letterSpacing: -1)),
@@ -121,14 +125,17 @@ class _IdentificationScreenState extends State<IdentificationScreen> {
                       text: "Continuar", 
                       isLoading: _isLoading,
                       onPressed: _isLoading ? null : () async {
-                         String query = _idController.text.trim();
-                         if (query.isEmpty) return;
+                         String rawQuery = _idController.text.trim();
+                         if (rawQuery.isEmpty) return;
+                         
+                         // Normalizar entrada para búsqueda consistente
+                         final query = rawQuery.contains('@') ? rawQuery : rawQuery.replaceAll(RegExp(r'\D'), '');
 
                          setState(() => _isLoading = true);
                          String? loginEmail;
                          
                          // 1. Verificar coincidencia local (acelerar si es el mismo dispositivo)
-                         if (_enrolledCard != null && query == _enrolledCard && _enrolledEmail != null) {
+                         if (_enrolledCard != null && (query == _enrolledCard || query == _enrolledCard?.replaceAll(RegExp(r'\D'), '')) && _enrolledEmail != null) {
                            loginEmail = _enrolledEmail!;
                          } 
                          
@@ -151,14 +158,15 @@ class _IdentificationScreenState extends State<IdentificationScreen> {
                          if (mounted) setState(() => _isLoading = false);
 
                          if (loginEmail != null) {
-                           Navigator.push(context, MaterialPageRoute(builder: (_) => LoginScreen(initialEmail: loginEmail)));
+                           final auth = context.read<AuthService>();
+                           await auth.setEnrolledEmail(loginEmail);
+                           // La navegación ocurrirá automáticamente vía AuthWrapper
                          } else {
-                           if (mounted) {
-                             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                               content: Text("No se encontró una cuenta asociada a este número"),
-                               backgroundColor: AppColors.errorRed,
-                             ));
-                           }
+                           if (!mounted) return;
+                           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                             content: Text("No se encontró una cuenta asociada a este número"),
+                             backgroundColor: AppColors.errorRed,
+                           ));
                          }
                       },
                     ),

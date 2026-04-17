@@ -88,17 +88,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
           email: _emailController.text.trim(),
           fechaRegistro: DateTime.now(),
         );
-        await firestore.createUserProfile(user, customNumber: _cardController.text.trim());
+        final cardNum = _cardController.text.trim().replaceAll(RegExp(r'\D'), '');
+        await firestore.createUserProfile(user, customNumber: cardNum);
         
         // Save enrollment locally
         final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('enrolled_card', _cardController.text.trim());
+        await prefs.setString('enrolled_card', cardNum);
         await prefs.setString('enrolled_email', _emailController.text.trim());
         await prefs.setString('enrolled_name', _nombreController.text.trim());
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("¡Registro Exitoso! Bienvenido")));
-          Navigator.pop(context);
+          // La navegación al Dashboard ocurrirá automáticamente vía AuthWrapper
         }
       } catch (e) {
         if (mounted) _showError("Error al guardar perfil");

@@ -51,48 +51,37 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class AuthWrapper extends StatefulWidget {
+class AuthWrapper extends StatelessWidget {
   const AuthWrapper({super.key});
 
   @override
-  State<AuthWrapper> createState() => _AuthWrapperState();
-}
-
-class _AuthWrapperState extends State<AuthWrapper> {
-  bool _initialized = false;
-  String? _enrolledEmail;
-
-  @override
-  void initState() {
-    super.initState();
-    _checkEnrollment();
-  }
-
-  Future<void> _checkEnrollment() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _enrolledEmail = prefs.getString('enrolled_email');
-      _initialized = true;
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
-    if (!_initialized) return const Scaffold(body: Center(child: CircularProgressIndicator()));
-
     final auth = Provider.of<AuthService>(context);
     
-    // 1. Si ya hay sesión activa en Firebase y NO es anónima -> Dashboard
+    // 0. Seguridad v1.0.5: Durante el proceso de logout activo, mostrar pantalla en blanco
+    if (auth.isLoggingOut) {
+      return const Scaffold(backgroundColor: AppColors.background);
+    }
+    
+    // 0. Si el sistema de sesión aún no ha cargado el enrolamiento (null inicial vs null real)
+    // El AuthService carga el enrolamiento en el constructor, pero es asíncrono.
+    // Aunque notifyListeners se llamará, si queremos ser deterministas:
+    // Pero por simplicidad, confiamos en notifyListeners().
+
+    // 1. Si hay sesión activa real (no anónima) -> Dashboard
     if (auth.user != null && !auth.user!.isAnonymous) {
-      return const DashboardScreen();
+      return const DashboardScreen(key: ValueKey('dash_screen'));
     }
     
-    // 2. Si hay un usuario registrado localmente -> Directo al PIN
-    if (_enrolledEmail != null) {
-      return LoginScreen(initialEmail: _enrolledEmail!);
+    // 2. Si no hay sesión, pero tenemos correo enrolado localmente -> Login (PIN)
+    if (auth.enrolledEmail != null) {
+      return LoginScreen(
+        key: ValueKey('login_screen'),
+        initialEmail: auth.enrolledEmail!
+      );
     }
     
-    // 3. Fallback: Primer ingreso -> Tarjeta (Identificación)
-    return const IdentificationScreen();
+    // 3. Primer ingreso o sesión anónima en curso -> Identificación
+    return const IdentificationScreen(key: ValueKey('id_screen'));
   }
 }
