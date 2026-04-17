@@ -23,10 +23,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final auth = context.read<AuthService>();
+    // Usamos watch para reaccionar inmediatamente al cambio de sesión (logout)
+    final auth = context.watch<AuthService>();
     final firestore = context.read<FirestoreService>();
+    final currentUser = auth.user;
 
-    if (auth.user == null) {
+    // Si no hay usuario, retornamos un estado vacío mientras AuthWrapper redirige
+    if (currentUser == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
@@ -35,10 +38,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
       body: SafeArea(
         bottom: false,
         child: StreamBuilder<UserModel?>(
-          stream: firestore.getUser(auth.user!.uid),
+          stream: currentUser != null ? firestore.getUser(currentUser.uid) : Stream.value(null),
           builder: (context, userSnap) {
+            // Seguridad Extra: Si el usuario desaparece durante el build, salimos
+            if (currentUser == null) return const Center(child: CircularProgressIndicator());
+
             // Seguridad Nivel 2: Si el usuario es anónimo, no permitir ver Dashboard
-            if (auth.user!.isAnonymous) {
+            if (currentUser.isAnonymous) {
               Future.microtask(() => auth.logout());
               return const Center(child: Text("Sesión no autorizada"));
             }
@@ -46,7 +52,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
             if (userSnap.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
             
             // Si no hay datos de usuario, mostramos el estado de error (reparación)
-            if (!userSnap.hasData || userSnap.data == null) return _buildErrorState(auth, firestore);
+            if (!userSnap.hasData || userSnap.data == null) {
+              return _buildErrorState(auth, firestore, currentUser.uid, currentUser.email);
+            }
             
             final user = userSnap.data!;
 
@@ -447,7 +455,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildErrorState(AuthService auth, FirestoreService firestore) {
+  Widget _buildErrorState(AuthService auth, FirestoreService firestore, String uid, String? email) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -468,11 +476,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
             text: "REPARAR Y ACTIVAR CUENTA", 
             onPressed: () async {
                try {
-                 print("REPAIR: Iniciando reparación inteligente para ${auth.user!.uid}");
+                 print("REPAIR: Iniciando reparación inteligente para $uid");
                  final user = UserModel(
-                   userId: auth.user!.uid,
+                   userId: uid,
                    nombre: "Demo10", // Usamos el nombre detectado por el usuario
-                   email: auth.user!.email ?? "demo10@demo.com",
+                   email: email ?? "demo10@demo.com",
                    fechaRegistro: DateTime.now(),
                  );
                  // Usamos la nueva lógica que verifica si las cuentas ya existen
