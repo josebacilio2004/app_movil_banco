@@ -30,7 +30,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     // Si no hay usuario, retornamos un estado vacío mientras AuthWrapper redirige
     if (currentUser == null) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const SizedBox.shrink();
     }
 
     return Scaffold(
@@ -41,7 +41,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           stream: currentUser != null ? firestore.getUser(currentUser.uid) : Stream.value(null),
           builder: (context, userSnap) {
             // Seguridad Extra: Si el usuario desaparece durante el build, salimos
-            if (currentUser == null) return const Center(child: CircularProgressIndicator());
+            if (currentUser == null) return const Scaffold(backgroundColor: AppColors.background);
 
             // Seguridad Nivel 2: Si el usuario es anónimo, no permitir ver Dashboard
             if (currentUser.isAnonymous) {
@@ -49,7 +49,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
               return const Center(child: Text("Sesión no autorizada"));
             }
 
-            if (userSnap.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
+            if (userSnap.connectionState == ConnectionState.waiting) {
+              return const Scaffold(backgroundColor: AppColors.background);
+            }
             
             // Si no hay datos de usuario, mostramos el estado de error (reparación)
             if (!userSnap.hasData || userSnap.data == null) {
@@ -304,7 +306,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return StreamBuilder<List<CuentaModel>>(
       stream: firestore.getCuentas(user.userId),
       builder: (context, snap) {
-        if (!snap.hasData || snap.data == null || snap.data!.isEmpty) return const SizedBox(height: 200, child: Center(child: CircularProgressIndicator()));
+        if (!snap.hasData || snap.data == null || snap.data!.isEmpty) return const SizedBox(height: 100);
         final mainAcc = snap.data!.firstWhere((a) => a.tipo == 'corriente', orElse: () => snap.data!.first);
         return StitchCard(
           title: "Saldo Disponible",
@@ -380,7 +382,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return StreamBuilder<List<TransaccionModel>>(
       stream: firestore.getTransacciones(user.userId),
       builder: (context, snap) {
-        if (!snap.hasData) return const Center(child: CircularProgressIndicator());
+        if (!snap.hasData) return const SizedBox.shrink();
         final txs = snap.data!.take(3).toList();
         if (txs.isEmpty) return const Text("No hay movimientos recientes");
         

@@ -7,14 +7,22 @@ class AuthService extends ChangeNotifier {
   User? _user;
   String? _enrolledEmail;
 
+  bool _isLoggingOut = false;
+
   User? get user => _user;
   String? get enrolledEmail => _enrolledEmail;
   bool get isAuthenticated => _user != null;
+  bool get isLoggingOut => _isLoggingOut;
 
   AuthService() {
     _auth.authStateChanges().listen((User? user) {
-      _user = user;
-      notifyListeners();
+      if (_isLoggingOut) return; // Ignorar eventos durante el proceso de logout manual
+      
+      if (_user?.uid != user?.uid) {
+        print("AUTH: Cambio de estado detectado: ${user?.email ?? 'Sesión cerrada'}");
+        _user = user;
+        notifyListeners();
+      }
     });
     _loadEnrolledEmail();
   }
@@ -82,18 +90,27 @@ class AuthService extends ChangeNotifier {
   }
 
   Future<void> logout() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove('enrolled_email');
-      await prefs.remove('enrolled_name');
-      await prefs.remove('enrolled_card');
-      _enrolledEmail = null;
-      print("AUTH: Enrolamiento local eliminado");
-    } catch (e) {
-      print("AUTH ERROR clearing prefs: $e");
-    }
-    await _auth.signOut();
+    print("AUTH: Logout v1.0.6 (Persistent Enrollment) Iniciado");
+    
+    _isLoggingOut = true;
     _user = null;
-    notifyListeners();
+    // NO limpiamos _enrolledEmail aquí para permitir que regrese a la pantalla de PIN
+    notifyListeners(); 
+
+    _performBackgroundCleanup();
+  }
+
+  Future<void> _performBackgroundCleanup() async {
+    try {
+      // En un logout NORMAL, no queremos borrar el enrolamiento (comportamiento BCP)
+      // Solo cerramos la sesión en Firebase.
+      await _auth.signOut();
+      print("AUTH: Cleanup de segundo plano (Firebase) completado");
+    } catch (e) {
+      print("AUTH ERROR en cleanup: $e");
+    } finally {
+      _isLoggingOut = false;
+      notifyListeners(); // IMPORTANTE: Notificar para salir del estado de bloqueo en AuthWrapper
+    }
   }
 }

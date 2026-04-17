@@ -8,7 +8,6 @@ import 'services/firestore_service.dart';
 import 'screens/identification_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/dashboard_screen.dart';
-import 'screens/solicitud_credito_screen.dart';
 import 'utils/constants.dart';
 
 void main() async {
@@ -47,9 +46,6 @@ class MyApp extends StatelessWidget {
           ),
         ),
         home: const AuthWrapper(),
-        routes: {
-          "solicitud_credito": (context) => const SolicitudCreditoScreen(),
-        },
       ),
     );
   }
@@ -62,6 +58,11 @@ class AuthWrapper extends StatelessWidget {
   Widget build(BuildContext context) {
     final auth = Provider.of<AuthService>(context);
     
+    // 0. Seguridad v1.0.5: Durante el proceso de logout activo, mostrar pantalla en blanco
+    if (auth.isLoggingOut) {
+      return const Scaffold(backgroundColor: AppColors.background);
+    }
+    
     // 0. Si el sistema de sesión aún no ha cargado el enrolamiento (null inicial vs null real)
     // El AuthService carga el enrolamiento en el constructor, pero es asíncrono.
     // Aunque notifyListeners se llamará, si queremos ser deterministas:
@@ -69,15 +70,18 @@ class AuthWrapper extends StatelessWidget {
 
     // 1. Si hay sesión activa real (no anónima) -> Dashboard
     if (auth.user != null && !auth.user!.isAnonymous) {
-      return const DashboardScreen();
+      return const DashboardScreen(key: ValueKey('dash_screen'));
     }
     
     // 2. Si no hay sesión, pero tenemos correo enrolado localmente -> Login (PIN)
     if (auth.enrolledEmail != null) {
-      return LoginScreen(initialEmail: auth.enrolledEmail!);
+      return LoginScreen(
+        key: ValueKey('login_screen'),
+        initialEmail: auth.enrolledEmail!
+      );
     }
     
     // 3. Primer ingreso o sesión anónima en curso -> Identificación
-    return const IdentificationScreen();
+    return const IdentificationScreen(key: ValueKey('id_screen'));
   }
 }
