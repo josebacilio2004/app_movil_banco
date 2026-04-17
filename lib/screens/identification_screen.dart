@@ -58,7 +58,11 @@ class _IdentificationScreenState extends State<IdentificationScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   IconButton(
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: () {
+                      if (Navigator.canPop(context)) {
+                        Navigator.pop(context);
+                      }
+                    },
                     icon: const Icon(Icons.arrow_back, color: AppColors.primaryRed),
                   ),
                   Text("MiBCP", style: AppStyles.headline(size: 24, color: AppColors.primaryRed).copyWith(letterSpacing: -1)),
@@ -154,14 +158,15 @@ class _IdentificationScreenState extends State<IdentificationScreen> {
                          if (mounted) setState(() => _isLoading = false);
 
                          if (loginEmail != null) {
-                           Navigator.push(context, MaterialPageRoute(builder: (_) => LoginScreen(initialEmail: loginEmail)));
+                           final auth = context.read<AuthService>();
+                           await auth.setEnrolledEmail(loginEmail);
+                           // La navegación ocurrirá automáticamente vía AuthWrapper
                          } else {
-                           if (mounted) {
-                             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                               content: Text("No se encontró una cuenta asociada a este número"),
-                               backgroundColor: AppColors.errorRed,
-                             ));
-                           }
+                           if (!mounted) return;
+                           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                             content: Text("No se encontró una cuenta asociada a este número"),
+                             backgroundColor: AppColors.errorRed,
+                           ));
                          }
                       },
                     ),

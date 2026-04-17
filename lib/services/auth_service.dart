@@ -5,8 +5,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 class AuthService extends ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   User? _user;
+  String? _enrolledEmail;
 
   User? get user => _user;
+  String? get enrolledEmail => _enrolledEmail;
   bool get isAuthenticated => _user != null;
 
   AuthService() {
@@ -14,16 +16,37 @@ class AuthService extends ChangeNotifier {
       _user = user;
       notifyListeners();
     });
+    _loadEnrolledEmail();
+  }
+
+  Future<void> _loadEnrolledEmail() async {
+    final prefs = await SharedPreferences.getInstance();
+    _enrolledEmail = prefs.getString('enrolled_email');
+    notifyListeners();
+  }
+
+  Future<void> setEnrolledEmail(String? email) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (email != null) {
+      await prefs.setString('enrolled_email', email);
+    } else {
+      await prefs.remove('enrolled_email');
+      // También podríamos querer limpiar nombre y tarjeta si existen
+      await prefs.remove('enrolled_name');
+      await prefs.remove('enrolled_card');
+    }
+    _enrolledEmail = email;
+    notifyListeners();
   }
 
   Future<String?> login(String email, String password) async {
+// ... existing login code ...
     try {
       print("AUTH: Intentando login para $email (timeout 15s)");
       await _auth.signInWithEmailAndPassword(email: email, password: password)
           .timeout(const Duration(seconds: 15));
       print("AUTH: Login exitoso para $email");
       
-      // Forzar actualización de estado por si authStateChanges tarda
       _user = _auth.currentUser;
       notifyListeners();
       
@@ -37,6 +60,7 @@ class AuthService extends ChangeNotifier {
     }
   }
 
+// ... existing methods ...
   Future<void> signInAnonymously() async {
     try {
       if (_auth.currentUser == null) {
@@ -60,7 +84,10 @@ class AuthService extends ChangeNotifier {
   Future<void> logout() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.clear(); // Limpiar todo el enrolamiento local
+      await prefs.remove('enrolled_email');
+      await prefs.remove('enrolled_name');
+      await prefs.remove('enrolled_card');
+      _enrolledEmail = null;
       print("AUTH: Enrolamiento local eliminado");
     } catch (e) {
       print("AUTH ERROR clearing prefs: $e");

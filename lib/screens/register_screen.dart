@@ -99,7 +99,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("¡Registro Exitoso! Bienvenido")));
-          Navigator.pop(context);
+          // La navegación al Dashboard ocurrirá automáticamente vía AuthWrapper
         }
       } catch (e) {
         if (mounted) _showError("Error al guardar perfil");

@@ -58,36 +58,26 @@ class MyApp extends StatelessWidget {
 class AuthWrapper extends StatelessWidget {
   const AuthWrapper({super.key});
 
-  Future<String?> _getEnrolledEmail() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('enrolled_email');
-  }
-
   @override
   Widget build(BuildContext context) {
     final auth = Provider.of<AuthService>(context);
     
-    // 1. Si ya hay sesión activa en Firebase y NO es anónima -> Dashboard
+    // 0. Si el sistema de sesión aún no ha cargado el enrolamiento (null inicial vs null real)
+    // El AuthService carga el enrolamiento en el constructor, pero es asíncrono.
+    // Aunque notifyListeners se llamará, si queremos ser deterministas:
+    // Pero por simplicidad, confiamos en notifyListeners().
+
+    // 1. Si hay sesión activa real (no anónima) -> Dashboard
     if (auth.user != null && !auth.user!.isAnonymous) {
       return const DashboardScreen();
     }
     
-    // 2. Si no hay sesión, verificamos enrolamiento local dinámicamente
-    return FutureBuilder<String?>(
-      future: _getEnrolledEmail(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(body: Center(child: CircularProgressIndicator()));
-        }
-        
-        final enrolledEmail = snapshot.data;
-        if (enrolledEmail != null) {
-          return LoginScreen(initialEmail: enrolledEmail);
-        }
-        
-        // 3. Fallback: Primer ingreso -> Tarjeta (Identificación)
-        return const IdentificationScreen();
-      }
-    );
+    // 2. Si no hay sesión, pero tenemos correo enrolado localmente -> Login (PIN)
+    if (auth.enrolledEmail != null) {
+      return LoginScreen(initialEmail: auth.enrolledEmail!);
+    }
+    
+    // 3. Primer ingreso o sesión anónima en curso -> Identificación
+    return const IdentificationScreen();
   }
 }

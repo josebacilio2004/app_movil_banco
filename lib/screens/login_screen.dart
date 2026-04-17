@@ -99,11 +99,8 @@ class _LoginScreenState extends State<LoginScreen> {
       }
 
       if (mounted) {
-        Navigator.pushAndRemoveUntil(
-          context, 
-          MaterialPageRoute(builder: (_) => const DashboardScreen()),
-          (route) => false
-        );
+        // La navegación ocurrirá automáticamente vía AuthWrapper al detectar auth.user != null
+        print("UI: Esperando redirección automática a Dashboard...");
       }
     }
   }
@@ -204,12 +201,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   
                   const SizedBox(height: 24),
                   TextButton(
-                    onPressed: () {
-                      Navigator.pushAndRemoveUntil(
-                        context, 
-                        MaterialPageRoute(builder: (_) => const IdentificationScreen()),
-                        (route) => false
-                      );
+                    onPressed: () async {
+                      final auth = context.read<AuthService>();
+                      await auth.setEnrolledEmail(null);
                     },
                     child: Text(
                       "¿No eres tú? Cambiar de usuario", 
