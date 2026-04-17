@@ -16,7 +16,7 @@ class FirestoreService {
     if (accountsQuery.docs.isNotEmpty) {
       // Las cuentas ya existen, solo creamos el documento de usuario
       print("REPAIR: Cuentas detectadas, vinculando perfil para ${user.userId}");
-      await _db.collection('usuarios').doc(user.userId).set(user.toMap());
+      await saveUserProfile(user);
     } else {
       // No hay nada, creamos todo desde cero
       print("REPAIR: No se detectaron cuentas, realizando creación completa");
@@ -24,17 +24,24 @@ class FirestoreService {
     }
   }
 
-  // Crear perfil de usuario y cuentas demo
-  Future<void> createUserProfile(UserModel user, {String? customNumber}) async {
-    final normalizedNumber = customNumber != null ? _normalize(customNumber) : '4521890123456789';
+  // Guardar perfil de usuario (sin tocar cuentas)
+  Future<void> saveUserProfile(UserModel user) async {
     await _db.collection('usuarios').doc(user.userId).set(user.toMap());
+  }
+
+  // Generar datos iniciales para una nueva cuenta
+  Future<void> generateInitialData(String userId, {String? customNumber}) async {
+    final normalizedNumber = customNumber != null ? _normalize(customNumber) : '4521890123456789';
     
-    // Crear cuentas demo
+    // Verificar si ya tiene cuentas para no duplicar
+    final existing = await _db.collection('cuentas').where('userId', isEqualTo: userId).limit(1).get();
+    if (existing.docs.isNotEmpty) return;
+
     final batch = _db.batch();
     
     final cuentaCorrienteRef = _db.collection('cuentas').doc();
     batch.set(cuentaCorrienteRef, {
-      'userId': user.userId,
+      'userId': userId,
       'tipo': 'corriente',
       'numero': normalizedNumber,
       'saldo': 4250.00,
@@ -42,15 +49,15 @@ class FirestoreService {
 
     final cuentaAhorroRef = _db.collection('cuentas').doc();
     batch.set(cuentaAhorroRef, {
-      'userId': user.userId,
+      'userId': userId,
       'tipo': 'ahorro',
-      'numero': '****7890',
+      'numero': '7890123456781234',
       'saldo': 2800.00,
       'metaAhorro': 20000.00,
       'progresoAhorro': 2800.00,
     });
 
-    // Agregar 5 movimientos iniciales
+    // Movimientos iniciales
     final movements = [
       {'descripcion': 'Pago Agua SEDAPAL', 'monto': 120.0, 'tipo': 'debito', 'fecha': DateTime.now()},
       {'descripcion': 'Transferencia Recibida', 'monto': 500.0, 'tipo': 'credito', 'fecha': DateTime.now().subtract(const Duration(days: 1))},
@@ -62,7 +69,7 @@ class FirestoreService {
     for (var m in movements) {
       final txRef = _db.collection('transacciones').doc();
       batch.set(txRef, {
-        'userId': user.userId,
+        'userId': userId,
         'cuentaId': cuentaCorrienteRef.id,
         'descripcion': m['descripcion'],
         'monto': m['monto'],
@@ -72,6 +79,12 @@ class FirestoreService {
     }
 
     await batch.commit();
+  }
+
+  // Crear perfil de usuario y cuentas demo
+  Future<void> createUserProfile(UserModel user, {String? customNumber}) async {
+    await saveUserProfile(user);
+    await generateInitialData(user.userId, customNumber: customNumber);
   }
 
   Stream<UserModel?> getUser(String uid) {
@@ -122,34 +135,44 @@ class FirestoreService {
   Future<String?> getEmailByCardNumber(String cardNumber) async {
     try {
       final normalized = _normalize(cardNumber);
+      print("SEARCH: Buscando email para tarjeta normalizada: $normalized");
+      
       final querySnapshot = await _db.collection('cuentas')
           .where('numero', isEqualTo: normalized)
           .limit(1)
           .get();
 
       if (querySnapshot.docs.isEmpty) {
-        // Fallback: Try searching with exact input if normalization changed it
-        if (normalized != cardNumber) {
-          final exactQuery = await _db.collection('cuentas')
-              .where('numero', isEqualTo: cardNumber)
-              .limit(1)
-              .get();
-          if (exactQuery.docs.isNotEmpty) {
-            final userId = exactQuery.docs.first.data()['userId'];
-            final userDoc = await _db.collection('usuarios').doc(userId).get();
-            return userDoc.data()?['email'] as String?;
-          }
-        }
+        print("SEARCH: No se encontró la tarjeta $normalized");
         return null;
       }
 
       final userId = querySnapshot.docs.first.data()['userId'];
       final userDoc = await _db.collection('usuarios').doc(userId).get();
       
-      return userDoc.data()?['email'] as String?;
+      final email = userDoc.data()?['email'] as String?;
+      print("SEARCH: Email encontrado: $email");
+      return email;
     } catch (e) {
       print("Error searching email by card: $e");
       return null;
     }
+  }
+
+  // LIMPIEZA TOTAL: Borra todos los datos de las colecciones principales
+  Future<void> wipeAllData() async {
+    print("WIPE: Iniciando limpieza total de base de datos...");
+    final collections = ['usuarios', 'cuentas', 'transacciones', 'prestamos'];
+    
+    for (var collName in collections) {
+      final snapshot = await _db.collection(collName).get();
+      final batch = _db.batch();
+      for (var doc in snapshot.docs) {
+        batch.delete(doc.reference);
+      }
+      await batch.commit();
+      print("WIPE: Colección $collName eliminada.");
+    }
+    print("WIPE: Limpieza completada con éxito.");
   }
 }

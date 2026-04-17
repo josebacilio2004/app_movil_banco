@@ -8,6 +8,7 @@ import 'services/firestore_service.dart';
 import 'screens/identification_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/dashboard_screen.dart';
+import 'screens/solicitud_credito_screen.dart';
 import 'utils/constants.dart';
 
 void main() async {
@@ -46,53 +47,37 @@ class MyApp extends StatelessWidget {
           ),
         ),
         home: const AuthWrapper(),
+        routes: {
+          "solicitud_credito": (context) => const SolicitudCreditoScreen(),
+        },
       ),
     );
   }
 }
 
-class AuthWrapper extends StatefulWidget {
+class AuthWrapper extends StatelessWidget {
   const AuthWrapper({super.key});
 
   @override
-  State<AuthWrapper> createState() => _AuthWrapperState();
-}
-
-class _AuthWrapperState extends State<AuthWrapper> {
-  bool _initialized = false;
-  String? _enrolledEmail;
-
-  @override
-  void initState() {
-    super.initState();
-    _checkEnrollment();
-  }
-
-  Future<void> _checkEnrollment() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _enrolledEmail = prefs.getString('enrolled_email');
-      _initialized = true;
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
-    if (!_initialized) return const Scaffold(body: Center(child: CircularProgressIndicator()));
-
     final auth = Provider.of<AuthService>(context);
     
-    // 1. Si ya hay sesión activa en Firebase y NO es anónima -> Dashboard
+    // 0. Si el sistema de sesión aún no ha cargado el enrolamiento (null inicial vs null real)
+    // El AuthService carga el enrolamiento en el constructor, pero es asíncrono.
+    // Aunque notifyListeners se llamará, si queremos ser deterministas:
+    // Pero por simplicidad, confiamos en notifyListeners().
+
+    // 1. Si hay sesión activa real (no anónima) -> Dashboard
     if (auth.user != null && !auth.user!.isAnonymous) {
       return const DashboardScreen();
     }
     
-    // 2. Si hay un usuario registrado localmente -> Directo al PIN
-    if (_enrolledEmail != null) {
-      return LoginScreen(initialEmail: _enrolledEmail!);
+    // 2. Si no hay sesión, pero tenemos correo enrolado localmente -> Login (PIN)
+    if (auth.enrolledEmail != null) {
+      return LoginScreen(initialEmail: auth.enrolledEmail!);
     }
     
-    // 3. Fallback: Primer ingreso -> Tarjeta (Identificación)
+    // 3. Primer ingreso o sesión anónima en curso -> Identificación
     return const IdentificationScreen();
   }
 }

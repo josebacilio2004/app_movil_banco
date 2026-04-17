@@ -214,7 +214,32 @@ class _DashboardScreenState extends State<DashboardScreen> {
               _buildProfileItem(Icons.security_outlined, "Privacidad y Seguridad", () {}),
               _buildProfileItem(Icons.help_outline_rounded, "Centro de Ayuda", () {}),
               const Divider(height: 40),
+              _buildProfileItem(
+                Icons.restore_from_trash_rounded, 
+                "REINICIAR TODO EL SISTEMA", 
+                () async {
+                  final confirm = await showDialog<bool>(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: const Text("Limpieza Total"),
+                      content: const Text("Esto borrará todos tus datos en la nube y cerrará la sesión. ¿Estás seguro?"),
+                      actions: [
+                        TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("Cancelar")),
+                        TextButton(onPressed: () => Navigator.pop(context, true), child: const Text("BORRAR TODO", style: TextStyle(color: AppColors.errorRed))),
+                      ],
+                    ),
+                  );
+
+                  if (confirm == true) {
+                    final firestore = context.read<FirestoreService>();
+                    await firestore.wipeAllData();
+                    await auth.logout();
+                  }
+                }, 
+                color: AppColors.primaryRed
+              ),
               _buildProfileItem(Icons.logout_rounded, "Cerrar Sesión", () => auth.logout(), color: AppColors.errorRed),
+              const SizedBox(height: 120), // Espacio para el BottomNav
             ],
           ),
         ),
@@ -279,7 +304,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return StreamBuilder<List<CuentaModel>>(
       stream: firestore.getCuentas(user.userId),
       builder: (context, snap) {
-        if (!snap.hasData || snap.data!.isEmpty) return const SizedBox(height: 200, child: Center(child: CircularProgressIndicator()));
+        if (!snap.hasData || snap.data == null || snap.data!.isEmpty) return const SizedBox(height: 200, child: Center(child: CircularProgressIndicator()));
         final mainAcc = snap.data!.firstWhere((a) => a.tipo == 'corriente', orElse: () => snap.data!.first);
         return StitchCard(
           title: "Saldo Disponible",
@@ -297,20 +322,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
       children: [
         Text("OPERACIONES RÁPIDAS", style: AppStyles.body(size: 12, weight: FontWeight.bold, color: AppColors.secondaryBlue).copyWith(letterSpacing: 1)),
         const SizedBox(height: 20),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            _buildOpItem("Transferir", Icons.sync_alt_rounded, () {}),
-            _buildOpItem("Pagar", Icons.receipt_long_rounded, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PaymentScreen()))),
-            _buildOpItem("Recargar", Icons.phone_iphone_rounded, () {}),
-            _buildOpItem("Préstamos", Icons.monetization_on_rounded, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LoanScreen()))),
-          ],
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          physics: const BouncingScrollPhysics(),
+          child: Row(
+            children: [
+              _buildOpItem("Transferir", Icons.sync_alt_rounded, () {}),
+              const SizedBox(width: 20),
+              _buildOpItem("Pagar", Icons.receipt_long_rounded, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PaymentScreen()))),
+              const SizedBox(width: 20),
+              _buildOpItem("Recargar", Icons.phone_iphone_rounded, () {}),
+              const SizedBox(width: 20),
+              _buildOpItem("Préstamos", Icons.monetization_on_rounded, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LoanScreen()))),
+              const SizedBox(width: 20),
+              _buildOpItem("Crédito", Icons.request_page, () => Navigator.pushNamed(context, "solicitud_credito"), color: AppColors.successGreen),
+            ],
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildOpItem(String label, IconData icon, VoidCallback onTap) {
+  Widget _buildOpItem(String label, IconData icon, VoidCallback onTap, {Color? color}) {
     return InkWell(
       onTap: onTap,
       child: Column(
@@ -319,7 +352,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             width: 64,
             height: 64,
             decoration: BoxDecoration(color: AppColors.containerLow, borderRadius: BorderRadius.circular(20)),
-            child: Icon(icon, color: AppColors.primaryRed, size: 28),
+            child: Icon(icon, color: color ?? AppColors.primaryRed, size: 28),
           ),
           const SizedBox(height: 8),
           Text(label, style: AppStyles.body(size: 11, weight: FontWeight.w600, color: AppColors.secondaryBlue)),
