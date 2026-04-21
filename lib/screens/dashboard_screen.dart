@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mibanco/models/prestamo.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../services/auth_service.dart';
@@ -170,31 +171,149 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildBankView() {
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(24),
-          alignment: Alignment.centerLeft,
-          child: Text("MI BANCA", style: AppStyles.headline(size: 24)),
-        ),
-        Expanded(
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.account_balance_outlined, size: 80, color: AppColors.outline),
-                const SizedBox(height: 16),
-                Text("Cuentas y Productos", style: AppStyles.headline(size: 20)),
-                const SizedBox(height: 8),
-                const Text("Aquí verás el detalle de tus préstamos y seguros."),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
+  final auth = context.read<AuthService>();
+  final firestore = context.read<FirestoreService>();
 
+  return Column(
+    children: [
+      Container(
+        padding: const EdgeInsets.all(24),
+        alignment: Alignment.centerLeft,
+        child: Text("MI BANCA", style: AppStyles.headline(size: 24)),
+      ),
+
+      Expanded(
+        child: StreamBuilder<List<PrestamoModel>>(
+          stream: firestore.getPrestamos(auth.user!.uid),
+          builder: (context, snapshot) {
+
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            if (!snapshot.hasData || snapshot.data!.isEmpty) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.account_balance_wallet_outlined,
+                        size: 60, color: AppColors.textGray),
+                    const SizedBox(height: 12),
+                    const Text(
+                      "No tienes préstamos registrados",
+                      style: TextStyle(color: AppColors.textGray),
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            final prestamos = snapshot.data!;
+
+            return ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: prestamos.length,
+              itemBuilder: (context, index) {
+                final p = prestamos[index];
+
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    gradient: LinearGradient(
+                      colors: [
+                        AppColors.primaryRed,
+                        AppColors.primaryRed.withOpacity(0.85)
+                      ],
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primaryRed.withOpacity(0.2),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      )
+                    ],
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+
+                        
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              "Préstamo activo",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Icon(Icons.account_balance,
+                                color: Colors.white.withOpacity(0.9)),
+                          ],
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        
+                        Text(
+                          "S/ ${p.monto.toStringAsFixed(0)}",
+                          style: const TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            _itemInfo("Cuota", "S/ ${p.cuotaMensual.toStringAsFixed(2)}"),
+                            _itemInfo("Plazo", "${p.plazo} m"),
+                            _itemInfo("Estado", p.estado),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            );
+          },
+        ),
+      ),
+    ],
+  );
+}
+
+Widget _itemInfo(String titulo, String valor) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        titulo,
+        style: TextStyle(
+          color: Colors.white.withOpacity(0.7),
+          fontSize: 12,
+        ),
+      ),
+      const SizedBox(height: 4),
+      Text(
+        valor,
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    ],
+  );
+}
   Widget _buildProfileView(UserModel user, AuthService auth) {
     return Column(
       children: [
@@ -275,13 +394,144 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
           Row(
             children: [
-              _buildIconButton(Icons.notifications_none_rounded, AppColors.secondaryBlue, () {
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("No tienes notificaciones nuevas")));
-              }),
+              StreamBuilder<List<PrestamoModel>>(
+  stream: context.read<FirestoreService>().getPrestamos(context.read<AuthService>().user!.uid),
+  builder: (context, snapshot) {
+
+    int count = snapshot.data?.length ?? 0;
+
+    return Stack(
+      children: [
+          _buildIconButton(
+            Icons.notifications_none_rounded,
+            AppColors.secondaryBlue,
+            () {
+              final auth = context.read<AuthService>();
+              final firestore = context.read<FirestoreService>();
+
+              showModalBottomSheet(
+                context: context,
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                ),
+                builder: (context) {
+                  return Container(
+                    padding: const EdgeInsets.all(16),
+                    height: 400,
+                    child: Column(
+                      children: [
+                        const Text(
+                          "Notificaciones",
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 16),
+
+                        Expanded(
+                          child: StreamBuilder<List<PrestamoModel>>(
+                            stream: firestore.getPrestamos(auth.user!.uid),
+                            builder: (context, snapshot) {
+
+                              if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                                return const Center(
+                                  child: Text("No tienes notificaciones"),
+                                );
+                              }
+
+                              final prestamos = snapshot.data!;
+
+                              return ListView.builder(
+                                itemCount: prestamos.length,
+                                itemBuilder: (context, index) {
+                                  final p = prestamos[index];
+
+                                  return ListTile(
+                                    leading: const Icon(Icons.notifications, color: Colors.orange),
+                                    title: const Text("Solicitud enviada"),
+                                    subtitle: Text(
+                                      "Tu préstamo de S/ ${p.monto} fue registrado\n"
+                                      "Estado actual: ${p.estado == 'pendiente' ? 'En evaluación' : p.estado}",
+                                    ),
+                                  );
+                                },
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+
+          if (count > 0)
+            Positioned(
+              right: 0,
+              top: 0,
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: const BoxDecoration(
+                  color: Colors.red,
+                  shape: BoxShape.circle,
+                ),
+                constraints: const BoxConstraints(
+                  minWidth: 18,
+                  minHeight: 18,
+                ),
+                child: Text(
+                  count.toString(),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
+        ],
+      );
+    },
+  ),
               const SizedBox(width: 12),
               _buildIconButton(Icons.help_outline_rounded, AppColors.primaryRed, () {
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Centro de Ayuda MiBCP")));
-              }),
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  title: Row(
+                    children: const [
+                      Icon(Icons.help_outline, color: AppColors.primaryRed),
+                      SizedBox(width: 8),
+                      Text("Centro de Ayuda"),
+                    ],
+                  ),
+                  content: const Text(
+                    "Bienvenido a MiBanco \n\n"
+                    "Aquí puedes:\n\n"
+                    "• Solicitar préstamos\n"
+                    "• Ver tus operaciones\n"
+                    "• Revisar tu banca\n\n"
+                    "Usa el menú inferior para navegar.",
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text(
+                        "ENTENDIDO",
+                        style: TextStyle(
+                          color: AppColors.primaryRed,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
             ],
           )
         ],
