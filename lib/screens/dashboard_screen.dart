@@ -14,6 +14,8 @@ import 'loan_screen.dart';
 import 'loan_simulator_screen.dart';
 import 'ahorro_screen.dart';
 import '../widgets/tarjeta_cuenta_custom.dart';
+import 'transferencia_screen.dart';
+import 'recarga_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -598,19 +600,28 @@ Widget _buildMainAccount(FirestoreService firestore, UserModel user) {
         physics: const BouncingScrollPhysics(),
         child: Row(
           children: [
-            _buildOpItem("Transferir", Icons.sync_alt_rounded, () {}),
+            // ✅ Transferir - Ahora funciona
+            _buildOpItem("Transferir", Icons.sync_alt_rounded, 
+              () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TransferenciaScreen()))),
             const SizedBox(width: 16),
+            
             _buildOpItem("Pagar", Icons.receipt_long_rounded,
               () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PaymentScreen()))),
             const SizedBox(width: 16),
-            _buildOpItem("Recargar", Icons.phone_iphone_rounded, () {}),
+            
+            // ✅ Recargar - Ahora funciona
+            _buildOpItem("Recargar", Icons.phone_iphone_rounded,
+              () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RecargaScreen()))),
             const SizedBox(width: 16),
+            
             _buildOpItem("Préstamos", Icons.monetization_on_rounded,
               () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LoanSimulatorScreen()))),
             const SizedBox(width: 16),
+            
             _buildOpItem("Crédito", Icons.request_page, () {},
               color: AppColors.successGreen),
             const SizedBox(width: 16),
+            
             _buildOpItem("Ahorro", Icons.savings_outlined,
               () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AhorroScreen()))),
           ],
