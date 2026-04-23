@@ -159,6 +159,79 @@ class FirestoreService {
     }
   }
 
+  // Validar si una cuenta destino existe y obtener el nombre del titular
+  Future<Map<String, dynamic>?> validarCuentaDestino(String numeroCuenta) async {
+    try {
+      final normalized = _normalize(numeroCuenta);
+      final querySnapshot = await _db.collection('cuentas')
+          .where('numero', isEqualTo: normalized)
+          .limit(1)
+          .get();
+
+      if (querySnapshot.docs.isEmpty) {
+        return null; // La cuenta no existe
+      }
+
+      final docData = querySnapshot.docs.first.data();
+      final cuentaId = querySnapshot.docs.first.id;
+      final userId = docData['userId'];
+      final userDoc = await _db.collection('usuarios').doc(userId).get();
+      
+      final userName = userDoc.data()?['nombre'] ?? 'Titular Desconocido';
+      return {
+        'cuentaId': cuentaId,
+        'titular': userName,
+        'userId': userId,
+        'numero': docData['numero']
+      };
+    } catch (e) {
+      print("Error validando cuenta destino: $e");
+      return null;
+    }
+  }
+
+  // Procesar transferencia entre dos cuentas
+  Future<void> procesarTransferencia({
+    required String fromUserId,
+    required String fromCuentaId,
+    required String toCuentaId,
+    required String toUserId,
+    required double monto,
+    required String descripcion,
+  }) async {
+    final batch = _db.batch();
+    
+    // 1. Débito de la cuenta origen
+    final txDebitoRef = _db.collection('transacciones').doc();
+    batch.set(txDebitoRef, {
+      'userId': fromUserId,
+      'cuentaId': fromCuentaId,
+      'descripcion': descripcion,
+      'monto': monto,
+      'tipo': 'debito',
+      'fecha': FieldValue.serverTimestamp(),
+    });
+
+    final cuentaOrigenRef = _db.collection('cuentas').doc(fromCuentaId);
+    batch.update(cuentaOrigenRef, {'saldo': FieldValue.increment(-monto)});
+
+    // 2. Crédito a la cuenta destino
+    final txCreditoRef = _db.collection('transacciones').doc();
+    batch.set(txCreditoRef, {
+      'userId': toUserId,
+      'cuentaId': toCuentaId,
+      'descripcion': 'Transferencia recibida',
+      'monto': monto,
+      'tipo': 'credito',
+      'fecha': FieldValue.serverTimestamp(),
+    });
+
+    final cuentaDestinoRef = _db.collection('cuentas').doc(toCuentaId);
+    batch.update(cuentaDestinoRef, {'saldo': FieldValue.increment(monto)});
+
+    await batch.commit();
+  }
+
   // LIMPIEZA TOTAL: Borra todos los datos de las colecciones principales
   Future<void> wipeAllData() async {
     print("WIPE: Iniciando limpieza total de base de datos...");

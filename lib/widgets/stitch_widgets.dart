@@ -25,10 +25,10 @@ class StitchButton extends StatelessWidget {
         style: ElevatedButton.styleFrom(
           backgroundColor: isPrimary ? AppColors.primaryRed : AppColors.surface,
           foregroundColor: isPrimary ? Colors.white : AppColors.secondaryBlue,
-          disabledBackgroundColor: isPrimary ? AppColors.primaryRed.withOpacity(0.4) : null,
+          disabledBackgroundColor: isPrimary ? AppColors.primaryRed.withValues(alpha: 0.4) : null,
           shape: RoundedRectangleBorder(borderRadius: AppStyles.radiusFull),
-          elevation: isPrimary ? 4 : 0,
-          side: isPrimary ? null : BorderSide(color: Colors.grey[300]!),
+          elevation: 0, // Flat design
+          side: isPrimary ? null : BorderSide(color: Colors.grey[200]!, width: 1.5),
         ),
         child: isLoading
             ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
@@ -62,9 +62,9 @@ class StitchCard extends StatelessWidget {
       height: 220,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        gradient: AppColors.bcpGradient,
+        color: AppColors.primaryRed, // Flat color like NuBank instead of gradient
         borderRadius: AppStyles.radius3XL,
-        boxShadow: AppStyles.intenseShadow,
+        boxShadow: AppStyles.cardShadow, // Softer shadow
       ),
       child: Stack(
         children: [
@@ -77,7 +77,7 @@ class StitchCard extends StatelessWidget {
               height: 150,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.1),
+                color: Colors.white.withValues(alpha: 0.1),
               ),
             ),
           ),
@@ -91,7 +91,7 @@ class StitchCard extends StatelessWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(title.toUpperCase(), style: AppStyles.body(size: 10, color: Colors.white.withOpacity(0.8), weight: FontWeight.bold).copyWith(letterSpacing: 2)),
+                      Text(title.toUpperCase(), style: AppStyles.body(size: 10, color: Colors.white.withValues(alpha: 0.8), weight: FontWeight.bold).copyWith(letterSpacing: 2)),
                       const SizedBox(height: 4),
                       Text(amount, style: AppStyles.headline(size: 32, color: Colors.white)),
                     ],
@@ -110,7 +110,7 @@ class StitchCard extends StatelessWidget {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text("TITULAR", style: AppStyles.body(size: 9, color: Colors.white.withOpacity(0.6), weight: FontWeight.bold)),
+                          Text("TITULAR", style: AppStyles.body(size: 9, color: Colors.white.withValues(alpha: 0.6), weight: FontWeight.bold)),
                           Text(holder.toUpperCase(), style: AppStyles.body(size: 14, color: Colors.white, weight: FontWeight.w600)),
                         ],
                       ),
@@ -119,10 +119,10 @@ class StitchCard extends StatelessWidget {
                         height: 30,
                         child: Stack(
                           children: [
-                            Container(width: 30, height: 30, decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.white.withOpacity(0.2))),
+                            Container(width: 30, height: 30, decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.white.withValues(alpha: 0.2))),
                             Positioned(
                               left: 15,
-                              child: Container(width: 30, height: 30, decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.white.withOpacity(0.4))),
+                              child: Container(width: 30, height: 30, decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.white.withValues(alpha: 0.4))),
                             ),
                           ],
                         ),
@@ -151,10 +151,10 @@ class StitchBottomNav extends StatelessWidget {
       height: 90,
       padding: const EdgeInsets.symmetric(horizontal: 20),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.98), // Solid color for performance
+        color: Colors.white.withValues(alpha: 0.98), // Solid color for performance
         borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20, offset: const Offset(0, -5))
+          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 20, offset: const Offset(0, -5))
         ],
       ),
       child: Row(

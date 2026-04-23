@@ -235,11 +235,11 @@ class _LoginScreenState extends State<LoginScreen> {
             shape: BoxShape.circle,
             color: isFilled ? AppColors.primaryRed : Colors.transparent,
             border: Border.all(
-              color: isFilled ? AppColors.primaryRed : AppColors.outline.withOpacity(0.3), 
+              color: isFilled ? AppColors.primaryRed : AppColors.outline.withValues(alpha: 0.3), 
               width: 2
             ),
             boxShadow: isFilled ? [
-              BoxShadow(color: AppColors.primaryRed.withOpacity(0.2), blurRadius: 4, spreadRadius: 1)
+              BoxShadow(color: AppColors.primaryRed.withValues(alpha: 0.2), blurRadius: 4, spreadRadius: 1)
             ] : null,
           ),
           child: (_showPin && isFilled) 

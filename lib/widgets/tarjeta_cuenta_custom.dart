@@ -35,15 +35,9 @@ class TarjetaCuentaCustom extends StatelessWidget {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        gradient: AppColors.bcpGradient,
+        color: AppColors.primaryRed,
         borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primaryRed.withOpacity(0.3),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
-          ),
-        ],
+        boxShadow: AppStyles.cardShadow,
       ),
       child: Stack(
         children: [
@@ -56,7 +50,7 @@ class TarjetaCuentaCustom extends StatelessWidget {
               height: 120,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.08),
+                color: Colors.white.withValues(alpha: 0.08),
               ),
             ),
           ),
@@ -68,7 +62,7 @@ class TarjetaCuentaCustom extends StatelessWidget {
               height: 100,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.05),
+                color: Colors.white.withValues(alpha: 0.05),
               ),
             ),
           ),
@@ -90,7 +84,7 @@ class TarjetaCuentaCustom extends StatelessWidget {
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: Colors.white.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
@@ -110,7 +104,7 @@ class TarjetaCuentaCustom extends StatelessWidget {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.15),
+                        color: Colors.white.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Row(
@@ -221,7 +215,7 @@ class TarjetaCuentaCustom extends StatelessWidget {
       decoration: BoxDecoration(
         color: isSelected 
             ? Colors.white 
-            : Colors.white.withOpacity(0.15),
+            : Colors.white.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(30),
       ),
       child: Text(

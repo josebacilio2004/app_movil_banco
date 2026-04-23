@@ -64,7 +64,7 @@ class _KeyButton extends StatelessWidget {
         child: InkWell(
           onTap: onPressed,
           customBorder: const CircleBorder(),
-          splashColor: AppColors.primaryRed.withOpacity(0.1),
+          splashColor: AppColors.primaryRed.withValues(alpha: 0.1),
           child: Container(
             decoration: const BoxDecoration(
               shape: BoxShape.circle,

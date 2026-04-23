@@ -179,7 +179,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       width: active ? 20 : 8,
       height: 8,
       decoration: BoxDecoration(
-        color: active ? AppColors.primaryRed : AppColors.outline.withOpacity(0.2),
+        color: active ? AppColors.primaryRed : AppColors.outline.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(4),
       ),
     );
@@ -239,7 +239,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             borderRadius: AppStyles.radiusXL,
           ),
           alignment: Alignment.center,
-          child: Text(label, style: AppStyles.body(size: 14, weight: FontWeight.bold, color: active ? AppColors.primaryRed : AppColors.secondaryBlue.withOpacity(0.4))),
+          child: Text(label, style: AppStyles.body(size: 14, weight: FontWeight.bold, color: active ? AppColors.primaryRed : AppColors.secondaryBlue.withValues(alpha: 0.4))),
         ),
       ),
     );
@@ -353,7 +353,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: isFilled ? AppColors.primaryRed : Colors.transparent,
-            border: Border.all(color: isFilled ? AppColors.primaryRed : AppColors.outline.withOpacity(0.3), width: 2),
+            border: Border.all(color: isFilled ? AppColors.primaryRed : AppColors.outline.withValues(alpha: 0.3), width: 2),
           ),
         );
       }),

@@ -143,10 +143,10 @@ class _MetaAhorroWidgetState extends State<MetaAhorroWidget>
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.outline.withOpacity(0.2)),
+        border: Border.all(color: AppColors.outline.withValues(alpha: 0.2)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -259,7 +259,7 @@ class _MetaAhorroWidgetState extends State<MetaAhorroWidget>
             width: double.infinity,
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppColors.primaryRed.withOpacity(0.1),
+              color: AppColors.primaryRed.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
@@ -287,7 +287,7 @@ class _MetaAhorroWidgetState extends State<MetaAhorroWidget>
             width: double.infinity,
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppColors.secondaryBlue.withOpacity(0.05),
+              color: AppColors.secondaryBlue.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Column(
@@ -334,7 +334,7 @@ class _MetaAhorroWidgetState extends State<MetaAhorroWidget>
           const SizedBox(height: 12),
           Container(
             decoration: BoxDecoration(
-              border: Border.all(color: AppColors.outline.withOpacity(0.2)),
+              border: Border.all(color: AppColors.outline.withValues(alpha: 0.2)),
               borderRadius: BorderRadius.circular(12),
             ),
             child: SingleChildScrollView(

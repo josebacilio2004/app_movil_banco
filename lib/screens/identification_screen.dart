@@ -86,7 +86,7 @@ class _IdentificationScreenState extends State<IdentificationScreen> {
                     const SizedBox(height: 8),
                     Text(
                       _enrolledName != null ? "Confirma tu identidad para continuar" : "Ingresa tu número de tarjeta o cuenta", 
-                      style: AppStyles.body(size: 16, color: AppColors.secondaryBlue.withOpacity(0.8))
+                      style: AppStyles.body(size: 16, color: AppColors.secondaryBlue.withValues(alpha: 0.8))
                     ),
                     
                     const SizedBox(height: 40),
@@ -105,14 +105,14 @@ class _IdentificationScreenState extends State<IdentificationScreen> {
                     const SizedBox(height: 32),
                     // Input Component
                     Text("NÚMERO DE ${_tabIndex == 0 ? 'TARJETA' : 'CUENTA'}", 
-                      style: AppStyles.body(size: 11, weight: FontWeight.bold).copyWith(letterSpacing: 2, color: AppColors.secondaryBlue.withOpacity(0.7))),
+                      style: AppStyles.body(size: 11, weight: FontWeight.bold).copyWith(letterSpacing: 2, color: AppColors.secondaryBlue.withValues(alpha: 0.7))),
                     const SizedBox(height: 12),
                     TextField(
                       controller: _idController,
                       style: AppStyles.headline(size: 20, weight: FontWeight.w600),
                       decoration: InputDecoration(
                         hintText: _tabIndex == 0 ? "**** **** **** 1234" : "191-*********",
-                        hintStyle: TextStyle(color: AppColors.onSurface.withOpacity(0.2)),
+                        hintStyle: TextStyle(color: AppColors.onSurface.withValues(alpha: 0.2)),
                         filled: true,
                         fillColor: AppColors.containerHighest,
                         border: OutlineInputBorder(borderRadius: AppStyles.radiusXL, borderSide: BorderSide.none),
@@ -185,7 +185,7 @@ class _IdentificationScreenState extends State<IdentificationScreen> {
                                 children: [
                                   Container(
                                     padding: const EdgeInsets.all(12),
-                                    decoration: BoxDecoration(color: AppColors.secondaryBlue.withOpacity(0.1), shape: BoxShape.circle),
+                                    decoration: BoxDecoration(color: AppColors.secondaryBlue.withValues(alpha: 0.1), shape: BoxShape.circle),
                                     child: const Icon(Icons.fingerprint, color: AppColors.secondaryBlue, size: 28),
                                   ),
                                   const SizedBox(width: 12),
@@ -217,7 +217,7 @@ class _IdentificationScreenState extends State<IdentificationScreen> {
                 children: [
                   const Icon(Icons.verified_user, size: 18, color: AppColors.secondaryBlue),
                   const SizedBox(width: 8),
-                  Text("CONEXIÓN 100% SEGURA", style: AppStyles.body(size: 10, weight: FontWeight.bold).copyWith(letterSpacing: 1.2, color: AppColors.secondaryBlue.withOpacity(0.4))),
+                  Text("CONEXIÓN 100% SEGURA", style: AppStyles.body(size: 10, weight: FontWeight.bold).copyWith(letterSpacing: 1.2, color: AppColors.secondaryBlue.withValues(alpha: 0.4))),
                 ],
               ),
             ),
@@ -242,7 +242,7 @@ class _IdentificationScreenState extends State<IdentificationScreen> {
             boxShadow: active ? [const BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2))] : null,
           ),
           alignment: Alignment.center,
-          child: Text(label, style: AppStyles.body(size: 14, weight: FontWeight.bold, color: active ? AppColors.primaryRed : AppColors.secondaryBlue.withOpacity(0.4))),
+          child: Text(label, style: AppStyles.body(size: 14, weight: FontWeight.bold, color: active ? AppColors.primaryRed : AppColors.secondaryBlue.withValues(alpha: 0.4))),
         ),
       ),
     );

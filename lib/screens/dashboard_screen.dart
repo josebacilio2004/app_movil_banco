@@ -13,6 +13,7 @@ import 'payment_screen.dart';
 import 'loan_screen.dart';
 import 'loan_simulator_screen.dart';
 import 'ahorro_screen.dart';
+import 'transfer_screen.dart';
 import '../widgets/tarjeta_cuenta_custom.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -140,7 +141,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 24),
             children: [
               _buildOpListTile("Pagar Servicios", Icons.receipt_long_rounded, "Luz, Agua, Teléfono, etc.", () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PaymentScreen()))),
-              _buildOpListTile("Transferencias", Icons.sync_alt_rounded, "A cuentas propias y terceros", () {}),
+              _buildOpListTile("Transferencias", Icons.sync_alt_rounded, "A cuentas propias y terceros", () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TransferScreen()))),
               _buildOpListTile("Recarga de Celular", Icons.phone_iphone_rounded, "Movistar, Claro, Entel, Bitel", () {}),
               _buildOpListTile("Giros Nacionales", Icons.local_atm_rounded, "Envía dinero para retiro en cajero", () {}),
             ],
@@ -156,7 +157,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))]
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4))]
       ),
       child: ListTile(
         contentPadding: const EdgeInsets.all(16),
@@ -226,12 +227,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     gradient: LinearGradient(
                       colors: [
                         AppColors.primaryRed,
-                        AppColors.primaryRed.withOpacity(0.85)
+                        AppColors.primaryRed.withValues(alpha: 0.85)
                       ],
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.primaryRed.withOpacity(0.2),
+                        color: AppColors.primaryRed.withValues(alpha: 0.2),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
                       )
@@ -255,7 +256,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               ),
                             ),
                             Icon(Icons.account_balance,
-                                color: Colors.white.withOpacity(0.9)),
+                                color: Colors.white.withValues(alpha: 0.9)),
                           ],
                         ),
 
@@ -302,7 +303,7 @@ Widget _itemInfo(String titulo, String valor) {
       Text(
         titulo,
         style: TextStyle(
-          color: Colors.white.withOpacity(0.7),
+          color: Colors.white.withValues(alpha: 0.7),
           fontSize: 12,
         ),
       ),
@@ -598,7 +599,7 @@ Widget _buildMainAccount(FirestoreService firestore, UserModel user) {
         physics: const BouncingScrollPhysics(),
         child: Row(
           children: [
-            _buildOpItem("Transferir", Icons.sync_alt_rounded, () {}),
+            _buildOpItem("Transferir", Icons.sync_alt_rounded, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TransferScreen()))),
             const SizedBox(width: 16),
             _buildOpItem("Pagar", Icons.receipt_long_rounded,
               () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PaymentScreen()))),
@@ -630,19 +631,12 @@ Widget _buildMainAccount(FirestoreService firestore, UserModel user) {
           width: 64,
           height: 64,
           decoration: BoxDecoration(
-            color: color ?? AppColors.primaryRed,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: (color ?? AppColors.primaryRed).withOpacity(0.3),
-                blurRadius: 8,
-                offset: const Offset(0, 4),
-              ),
-            ],
+            color: AppColors.containerHigh, // Light gray
+            shape: BoxShape.circle, // Perfect circle
           ),
           child: Icon(
             icon,
-            color: Colors.white,
+            color: AppColors.onSurface, // Dark icon
             size: 28,
           ),
         ),
@@ -733,13 +727,7 @@ Widget _buildActivityFilter(String label, bool isSelected) {
     decoration: BoxDecoration(
       color: Colors.white,
       borderRadius: BorderRadius.circular(16),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.02),
-          blurRadius: 10,
-          offset: const Offset(0, 4),
-        ),
-      ],
+      // No shadow for cleaner NuBank style
     ),
     child: Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -751,8 +739,8 @@ Widget _buildActivityFilter(String label, bool isSelected) {
               height: 48,
               decoration: BoxDecoration(
                 color: isCredit 
-                    ? AppColors.successGreen.withOpacity(0.15) 
-                    : AppColors.primaryRed.withOpacity(0.15),
+                    ? AppColors.successGreen.withValues(alpha: 0.15) 
+                    : AppColors.primaryRed.withValues(alpha: 0.15),
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -783,7 +771,7 @@ Widget _buildActivityFilter(String label, bool isSelected) {
                   "${DateFormat("d MMM").format(tx.fecha)} • ${_getCategory(tx.descripcion)}",
                   style: TextStyle(
                     fontSize: 12,
-                    color: AppColors.textGray.withOpacity(0.6),
+                    color: AppColors.textGray.withValues(alpha: 0.6),
                   ),
                 ),
               ],
@@ -815,7 +803,7 @@ Widget _buildActivityFilter(String label, bool isSelected) {
     width: double.infinity,
     padding: const EdgeInsets.all(24),
     decoration: BoxDecoration(
-      color: AppColors.secondaryBlue.withOpacity(0.05),
+      color: AppColors.secondaryBlue.withValues(alpha: 0.05),
       borderRadius: AppStyles.radius3XL,
     ),
     child: Stack(
@@ -827,7 +815,7 @@ Widget _buildActivityFilter(String label, bool isSelected) {
             const SizedBox(height: 8),
             Text(
               "Tu Alcancía BCP tiene una nueva tasa de 4.5% TREA.", 
-              style: AppStyles.body(size: 13, color: AppColors.secondaryBlue.withOpacity(0.8))
+              style: AppStyles.body(size: 13, color: AppColors.secondaryBlue.withValues(alpha: 0.8))
             ),
             const SizedBox(height: 16),
             ElevatedButton(
@@ -851,7 +839,7 @@ Widget _buildActivityFilter(String label, bool isSelected) {
         Positioned(
           right: -10,
           bottom: -20,
-          child: Icon(Icons.savings_outlined, size: 100, color: AppColors.secondaryBlue.withOpacity(0.05)),
+          child: Icon(Icons.savings_outlined, size: 100, color: AppColors.secondaryBlue.withValues(alpha: 0.05)),
         )
       ],
     ),
@@ -906,7 +894,7 @@ Widget _buildActivityFilter(String label, bool isSelected) {
           const SizedBox(height: 16),
           TextButton(
             onPressed: () => auth.logout(), 
-            child: Text("Cerrar sesión", style: TextStyle(color: AppColors.textGray.withOpacity(0.5))),
+            child: Text("Cerrar sesión", style: TextStyle(color: AppColors.textGray.withValues(alpha: 0.5))),
           ),
         ],
         ),
