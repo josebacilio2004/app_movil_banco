@@ -11,6 +11,9 @@ import '../utils/constants.dart';
 import '../widgets/stitch_widgets.dart';
 import 'payment_screen.dart';
 import 'loan_screen.dart';
+import 'loan_simulator_screen.dart';
+import 'ahorro_screen.dart';
+import '../widgets/tarjeta_cuenta_custom.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -552,81 +555,159 @@ Widget _itemInfo(String titulo, String valor) {
     );
   }
 
-  Widget _buildMainAccount(FirestoreService firestore, UserModel user) {
-    return StreamBuilder<List<CuentaModel>>(
-      stream: firestore.getCuentas(user.userId),
-      builder: (context, snap) {
-        if (!snap.hasData || snap.data == null || snap.data!.isEmpty) return const SizedBox(height: 100);
-        final mainAcc = snap.data!.firstWhere((a) => a.tipo == 'corriente', orElse: () => snap.data!.first);
-        return StitchCard(
-          title: "Saldo Disponible",
-          amount: "S/ ${NumberFormat("#,##0.00").format(mainAcc.saldo)}",
-          number: "**** **** **** ${mainAcc.numero.length > 4 ? mainAcc.numero.substring(mainAcc.numero.length - 4) : '0000'}",
-          holder: user.nombre,
-        );
+  // En _buildHomeView, reemplaza _buildMainAccount por:
+
+Widget _buildMainAccount(FirestoreService firestore, UserModel user) {
+  return StreamBuilder<List<CuentaModel>>(
+    stream: firestore.getCuentas(user.userId),
+    builder: (context, snap) {
+      if (!snap.hasData || snap.data == null || snap.data!.isEmpty) {
+        return const SizedBox(height: 100);
       }
-    );
-  }
+      final mainAcc = snap.data!.firstWhere(
+        (a) => a.tipo == 'corriente', 
+        orElse: () => snap.data!.first,
+      );
+      
+      // ✅ Usar la nueva tarjeta personalizada
+      return TarjetaCuentaCustom(
+        nombre: user.nombre,
+        numero: mainAcc.numero,
+        saldo: mainAcc.saldo,
+        tipo: mainAcc.tipo,
+      );
+    },
+  );
+}
 
   Widget _buildQuickOperations() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        "OPERACIONES RÁPIDAS",
+        style: AppStyles.body(
+          size: 12,
+          weight: FontWeight.bold,
+          color: AppColors.secondaryBlue,
+        ).copyWith(letterSpacing: 1),
+      ),
+      const SizedBox(height: 20),
+      SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        child: Row(
+          children: [
+            _buildOpItem("Transferir", Icons.sync_alt_rounded, () {}),
+            const SizedBox(width: 16),
+            _buildOpItem("Pagar", Icons.receipt_long_rounded,
+              () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PaymentScreen()))),
+            const SizedBox(width: 16),
+            _buildOpItem("Recargar", Icons.phone_iphone_rounded, () {}),
+            const SizedBox(width: 16),
+            _buildOpItem("Préstamos", Icons.monetization_on_rounded,
+              () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LoanSimulatorScreen()))),
+            const SizedBox(width: 16),
+            _buildOpItem("Crédito", Icons.request_page, () {},
+              color: AppColors.successGreen),
+            const SizedBox(width: 16),
+            _buildOpItem("Ahorro", Icons.savings_outlined,
+              () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AhorroScreen()))),
+          ],
+        ),
+      ),
+    ],
+  );
+}
+
+  Widget _buildOpItem(String label, IconData icon, VoidCallback onTap, {Color? color}) {
+  return InkWell(
+    onTap: onTap,
+    borderRadius: BorderRadius.circular(20),
+    child: Column(
       children: [
-        Text("OPERACIONES RÁPIDAS", style: AppStyles.body(size: 12, weight: FontWeight.bold, color: AppColors.secondaryBlue).copyWith(letterSpacing: 1)),
-        const SizedBox(height: 20),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          physics: const BouncingScrollPhysics(),
-          child: Row(
-            children: [
-              _buildOpItem("Transferir", Icons.sync_alt_rounded, () {}),
-              const SizedBox(width: 20),
-              _buildOpItem("Pagar", Icons.receipt_long_rounded, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PaymentScreen()))),
-              const SizedBox(width: 20),
-              _buildOpItem("Recargar", Icons.phone_iphone_rounded, () {}),
-              const SizedBox(width: 20),
-              _buildOpItem("Préstamos", Icons.monetization_on_rounded, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LoanScreen()))),
-              const SizedBox(width: 20),
-              _buildOpItem("Crédito", Icons.request_page, () => Navigator.pushNamed(context, "solicitud_credito"), color: AppColors.successGreen),
+        Container(
+          width: 64,
+          height: 64,
+          decoration: BoxDecoration(
+            color: color ?? AppColors.primaryRed,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: (color ?? AppColors.primaryRed).withOpacity(0.3),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              ),
             ],
+          ),
+          child: Icon(
+            icon,
+            color: Colors.white,
+            size: 28,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          label,
+          style: AppStyles.body(
+            size: 11,
+            weight: FontWeight.w600,
+            color: AppColors.secondaryBlue,
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildOpItem(String label, IconData icon, VoidCallback onTap, {Color? color}) {
-    return InkWell(
-      onTap: onTap,
-      child: Column(
-        children: [
-          Container(
-            width: 64,
-            height: 64,
-            decoration: BoxDecoration(color: AppColors.containerLow, borderRadius: BorderRadius.circular(20)),
-            child: Icon(icon, color: color ?? AppColors.primaryRed, size: 28),
-          ),
-          const SizedBox(height: 8),
-          Text(label, style: AppStyles.body(size: 11, weight: FontWeight.w600, color: AppColors.secondaryBlue)),
-        ],
-      ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildRecentActivityHeader() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text("ACTIVIDAD RECIENTE", style: AppStyles.headline(size: 18)),
-        TextButton.icon(
-          onPressed: () {},
-          icon: const Icon(Icons.expand_more, size: 16),
-          label: Text("Este mes", style: AppStyles.body(size: 12, weight: FontWeight.bold, color: AppColors.secondaryBlue)),
-          style: TextButton.styleFrom(foregroundColor: AppColors.secondaryBlue),
-        )
-      ],
-    );
-  }
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text("ACTIVIDAD RECIENTE", style: AppStyles.headline(size: 18)),
+          TextButton.icon(
+            onPressed: () {},
+            icon: const Icon(Icons.expand_more, size: 16),
+            label: Text("Este mes", style: AppStyles.body(size: 12, weight: FontWeight.bold, color: AppColors.secondaryBlue)),
+            style: TextButton.styleFrom(foregroundColor: AppColors.secondaryBlue),
+          ),
+        ],
+      ),
+      const SizedBox(height: 12),
+      // Filtros
+      Row(
+        children: [
+          _buildActivityFilter("Todos", true),
+          const SizedBox(width: 12),
+          _buildActivityFilter("Débitos", false),
+          const SizedBox(width: 12),
+          _buildActivityFilter("Créditos", false),
+        ],
+      ),
+    ],
+  );
+}
+
+Widget _buildActivityFilter(String label, bool isSelected) {
+  return Container(
+    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+    decoration: BoxDecoration(
+      color: isSelected ? AppColors.primaryRed : AppColors.containerLow,
+      borderRadius: BorderRadius.circular(30),
+    ),
+    child: Text(
+      label,
+      style: TextStyle(
+        color: isSelected ? Colors.white : AppColors.secondaryBlue,
+        fontSize: 12,
+        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+      ),
+    ),
+  );
+}
 
   Widget _buildRecentActivityList(FirestoreService firestore, UserModel user) {
     return StreamBuilder<List<TransaccionModel>>(
@@ -644,52 +725,83 @@ Widget _itemInfo(String titulo, String valor) {
   }
 
   Widget _buildTxItem(TransaccionModel tx) {
-    bool isCredit = tx.tipo == 'credito';
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), boxShadow: [
-        BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))
-      ]),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: isCredit ? AppColors.tertiaryBlue.withOpacity(0.1) : AppColors.secondaryBlue.withOpacity(0.1),
-                  shape: BoxShape.circle
-                ),
-                child: Icon(
-                  isCredit ? Icons.trending_up_rounded : Icons.shopping_bag_outlined, 
-                  color: isCredit ? AppColors.tertiaryBlue : AppColors.secondaryBlue, 
-                  size: 24
-                ),
+  bool isCredit = tx.tipo == 'credito';
+  
+  return Container(
+    margin: const EdgeInsets.only(bottom: 12),
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.02),
+          blurRadius: 10,
+          offset: const Offset(0, 4),
+        ),
+      ],
+    ),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Row(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: isCredit 
+                    ? AppColors.successGreen.withOpacity(0.15) 
+                    : AppColors.primaryRed.withOpacity(0.15),
+                shape: BoxShape.circle,
               ),
-              const SizedBox(width: 16),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(tx.descripcion, style: AppStyles.body(size: 14, weight: FontWeight.bold)),
-                  Text(
-                    "${DateFormat("d MMM").format(tx.fecha)} • ${_getCategory(tx.descripcion)}", 
-                    style: AppStyles.body(size: 12, color: AppColors.textGray.withOpacity(0.6))
+              child: Icon(
+                isCredit ? Icons.trending_up_rounded : Icons.shopping_bag_outlined,
+                color: isCredit ? AppColors.successGreen : AppColors.primaryRed,
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  width: MediaQuery.of(context).size.width * 0.4,
+                  child: Text(
+                    tx.descripcion,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.secondaryBlue,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                ],
-              ),
-            ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  "${DateFormat("d MMM").format(tx.fecha)} • ${_getCategory(tx.descripcion)}",
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textGray.withOpacity(0.6),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+        Text(
+          "${isCredit ? '+' : '-'} S/ ${NumberFormat("#,##0.00").format(tx.monto)}",
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: isCredit ? AppColors.successGreen : AppColors.primaryRed,
           ),
-          Text(
-            "${isCredit ? '+' : '-'} S/ ${NumberFormat("#,##0.00").format(tx.monto)}",
-            style: AppStyles.headline(size: 15, color: isCredit ? AppColors.tertiaryBlue : AppColors.onSurface),
-          ),
-        ],
-      ),
-    );
-  }
+        ),
+      ],
+    ),
+  );
+}
 
   String _getCategory(String desc) {
     if (desc.contains("Wong")) return "Compras";
@@ -699,46 +811,52 @@ Widget _itemInfo(String titulo, String valor) {
   }
 
   Widget _buildSavingsPromo() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: AppColors.secondaryBlue.withOpacity(0.05),
-        borderRadius: AppStyles.radius3XL,
-      ),
-      child: Stack(
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text("Ahorra para tu meta", style: AppStyles.headline(size: 18, color: AppColors.secondaryBlue)),
-              const SizedBox(height: 8),
-              Text(
-                "Tu Alcancía BCP tiene una nueva tasa de 4.5% TREA.", 
-                style: AppStyles.body(size: 13, color: AppColors.secondaryBlue.withOpacity(0.8))
+  return Container(
+    width: double.infinity,
+    padding: const EdgeInsets.all(24),
+    decoration: BoxDecoration(
+      color: AppColors.secondaryBlue.withOpacity(0.05),
+      borderRadius: AppStyles.radius3XL,
+    ),
+    child: Stack(
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text("Ahorra para tu meta", style: AppStyles.headline(size: 18, color: AppColors.secondaryBlue)),
+            const SizedBox(height: 8),
+            Text(
+              "Tu Alcancía BCP tiene una nueva tasa de 4.5% TREA.", 
+              style: AppStyles.body(size: 13, color: AppColors.secondaryBlue.withOpacity(0.8))
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () {
+                // ✅ Navegar a la pantalla de Meta de Ahorro
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const AhorroScreen()),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryRed,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: AppStyles.radiusFull),
+                padding: const EdgeInsets.symmetric(horizontal: 24),
               ),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () {},
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.secondaryBlue,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: AppStyles.radiusFull),
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                ),
-                child: const Text("Empezar ahora", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-              )
-            ],
-          ),
-          Positioned(
-            right: -10,
-            bottom: -20,
-            child: Icon(Icons.savings_outlined, size: 100, color: AppColors.secondaryBlue.withOpacity(0.05)),
-          )
-        ],
-      ),
-    );
-  }
+              child: const Text("EMPEZAR AHORA", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+            )
+          ],
+        ),
+        Positioned(
+          right: -10,
+          bottom: -20,
+          child: Icon(Icons.savings_outlined, size: 100, color: AppColors.secondaryBlue.withOpacity(0.05)),
+        )
+      ],
+    ),
+  );
+}
 
   Widget _buildErrorState(AuthService auth, FirestoreService firestore, String uid, String? email) {
     return Center(

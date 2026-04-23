@@ -8,15 +8,12 @@ import '../utils/constants.dart';
 import '../utils/contract_validator.dart';
 import 'confirmation_screen.dart';
 
-
 class PaymentScreen extends StatefulWidget {
   const PaymentScreen({super.key});
-
 
   @override
   State<PaymentScreen> createState() => _PaymentScreenState();
 }
-
 
 class _PaymentScreenState extends State<PaymentScreen> {
   final _formKey = GlobalKey<FormState>();
@@ -27,10 +24,44 @@ class _PaymentScreenState extends State<PaymentScreen> {
   bool _loading = false;
   bool _verifying = false;
   ContractInfo? _contractInfo;
-
+  bool _submitted = false;
 
   final List<String> _servicios = ['Agua', 'Luz', 'Cable', 'Internet'];
 
+  // ✓ CRITERIO 2: Validación en tiempo real para habilitar botón
+  bool get _isFormValid {
+    // Validar servicio
+    if (_servicio.isEmpty) return false;
+    
+    // Validar contrato
+    final contrato = _contratoController.text.trim();
+    final contractError = ContractValidator.validateContract(_servicio, contrato);
+    if (contractError != null) return false;
+    if (contrato.isEmpty) return false;
+    
+    // Validar monto
+    final montoText = _montoController.text.trim();
+    if (montoText.isEmpty) return false;
+    final monto = double.tryParse(montoText);
+    if (monto == null || monto <= 0) return false;
+    
+    // Validar cuenta seleccionada
+    if (_cuentaSeleccionada == null) return false;
+    
+    // Validar saldo suficiente
+    if (monto > _cuentaSeleccionada!.saldo) return false;
+    
+    return true;
+  }
+
+  // ✓ CRITERIO 4: Obtener texto del resumen
+  String get _resumenServicio => _servicio;
+  String get _resumenContrato => _contratoController.text.trim();
+  String get _resumenMonto {
+    final monto = double.tryParse(_montoController.text.trim());
+    if (monto == null) return 'S/ 0.00';
+    return 'S/ ${monto.toStringAsFixed(2)}';
+  }
 
   @override
   void dispose() {
@@ -39,6 +70,23 @@ class _PaymentScreenState extends State<PaymentScreen> {
     super.dispose();
   }
 
+  void _onSubmit() {
+    setState(() => _submitted = true);
+    
+    // Validar formulario
+    if (!_formKey.currentState!.validate()) return;
+    
+    // ✓ CRITERIO 5: SnackBar de confirmación (BONUS)
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('✓ Listo para confirmar'),
+        backgroundColor: AppColors.successGreen,
+        duration: Duration(seconds: 2),
+      ),
+    );
+    
+    _confirmarPago();
+  }
 
   Future<void> _verifyContract() async {
     final contrato = _contratoController.text.trim();
@@ -48,7 +96,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
       );
       return;
     }
-
 
     final formatError = ContractValidator.validateContract(_servicio, contrato);
     if (formatError != null) {
@@ -64,9 +111,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
       return;
     }
 
-
     setState(() => _verifying = true);
-
 
     try {
       final info = await ContractValidator.verifyWithProvider(_servicio, contrato);
@@ -74,7 +119,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
         _contractInfo = info;
         _verifying = false;
       });
-
 
       if (info.isValid && info.amountDue != null) {
         _montoController.text = info.amountDue!.toStringAsFixed(2);
@@ -103,42 +147,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
     }
   }
 
-
   void _confirmarPago() async {
-    if (!_formKey.currentState!.validate()) return;
-
-
-    if (_cuentaSeleccionada == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Seleccione una cuenta')),
-      );
-      return;
-    }
-
-
     final monto = double.parse(_montoController.text);
     final contrato = _contratoController.text.trim();
-
-
-    final contractError = ContractValidator.validateContract(_servicio, contrato);
-    if (contractError != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(contractError), backgroundColor: AppColors.errorRed),
-      );
-      return;
-    }
-
-
-    if (_contractInfo == null || !_contractInfo!.isValid) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Por favor, verifique el número de contrato primero'),
-          backgroundColor: AppColors.errorRed,
-        ),
-      );
-      return;
-    }
-
 
     if (_cuentaSeleccionada!.saldo < monto) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -150,60 +161,12 @@ class _PaymentScreenState extends State<PaymentScreen> {
       return;
     }
 
-
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Confirmar Pago', style: TextStyle(fontWeight: FontWeight.bold)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildConfirmRow('Servicio:', _servicio),
-            const SizedBox(height: 8),
-            _buildConfirmRow('Contrato:', contrato),
-            if (_contractInfo?.consumerName != null) ...[
-              const SizedBox(height: 8),
-              _buildConfirmRow('Titular:', _contractInfo!.consumerName!),
-            ],
-            const SizedBox(height: 8),
-            _buildConfirmRow('Monto:', 'S/ ${monto.toStringAsFixed(2)}'),
-            const SizedBox(height: 16),
-            const Divider(),
-            const SizedBox(height: 8),
-            _buildConfirmRow(
-              'Cuenta origen:',
-              '${_cuentaSeleccionada!.tipo.toUpperCase()} (${_cuentaSeleccionada!.numero})',
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('CANCELAR')),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primaryRed,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('PAGAR'),
-          ),
-        ],
-      ),
-    );
-
-
-    if (confirmed != true) return;
-
-
     setState(() => _loading = true);
-
 
     final firestore = context.read<FirestoreService>();
     final auth = context.read<AuthService>();
     final currentUser = auth.user;
     if (currentUser == null) return;
-
 
     final transaccion = TransaccionModel(
       transaccionId: '',
@@ -215,20 +178,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
       fecha: DateTime.now(),
     );
 
-
     try {
       await firestore.registrarTransaccion(transaccion);
 
-
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('✓ Pago procesado exitosamente'),
-            backgroundColor: AppColors.successGreen,
-          ),
-        );
-
-
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
@@ -254,7 +207,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
     }
   }
 
-
   Widget _buildConfirmRow(String label, String value) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -265,18 +217,15 @@ class _PaymentScreenState extends State<PaymentScreen> {
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthService>();
     final firestore = context.read<FirestoreService>();
     final currentUser = auth.user;
 
-
     if (currentUser == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
-
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -293,7 +242,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
             return const Center(child: CircularProgressIndicator());
           }
 
-
           final cuentas = snap.data ?? [];
           if (_cuentaSeleccionada == null && cuentas.isNotEmpty) {
             _cuentaSeleccionada = cuentas.firstWhere(
@@ -302,24 +250,30 @@ class _PaymentScreenState extends State<PaymentScreen> {
             );
           }
 
-
           return SingleChildScrollView(
             padding: const EdgeInsets.all(24),
             child: Form(
               key: _formKey,
+              autovalidateMode: _submitted 
+                  ? AutovalidateMode.onUserInteraction 
+                  : AutovalidateMode.disabled,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('¿Qué servicio deseas pagar?', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.secondaryBlue)),
-                  const SizedBox(height: 20),
-
-
+                  // Servicio
+                  const Text('¿Qué servicio deseas pagar?', 
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.secondaryBlue)),
+                  const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
                     value: _servicio,
                     decoration: InputDecoration(
                       labelText: 'Selecciona Servicio',
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                       prefixIcon: const Icon(Icons.electrical_services),
+                      errorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: AppColors.errorRed, width: 1.5),
+                      ),
                     ),
                     items: _servicios.map((servicio) {
                       return DropdownMenuItem(
@@ -341,10 +295,16 @@ class _PaymentScreenState extends State<PaymentScreen> {
                         _contractInfo = null;
                       });
                     },
+                    validator: (value) {
+                      if (_submitted && (value == null || value.isEmpty)) {
+                        return 'Seleccione un servicio';
+                      }
+                      return null;
+                    },
                   ),
                   const SizedBox(height: 16),
 
-
+                  // Contrato
                   TextFormField(
                     controller: _contratoController,
                     decoration: InputDecoration(
@@ -352,6 +312,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       hintText: _getHintText(),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                       prefixIcon: const Icon(Icons.numbers),
+                      errorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: AppColors.errorRed, width: 1.5),
+                      ),
                       suffixIcon: _verifying
                           ? const Padding(
                               padding: EdgeInsets.all(12),
@@ -364,10 +328,17 @@ class _PaymentScreenState extends State<PaymentScreen> {
                     onChanged: (_) {
                       if (_contractInfo != null) setState(() => _contractInfo = null);
                     },
-                    validator: (value) => ContractValidator.validateContract(_servicio, value ?? ''),
+                    validator: (value) {
+                      if (_submitted) {
+                        if (value == null || value.isEmpty) {
+                          return 'Ingrese un número de contrato';
+                        }
+                        return ContractValidator.validateContract(_servicio, value);
+                      }
+                      return null;
+                    },
                   ),
                   const SizedBox(height: 12),
-
 
                   if (!_verifying)
                     TextButton.icon(
@@ -376,7 +347,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       label: const Text('Verificar Contrato'),
                       style: TextButton.styleFrom(foregroundColor: AppColors.secondaryBlue),
                     ),
-
 
                   if (_contractInfo != null && _contractInfo!.isValid) ...[
                     const SizedBox(height: 12),
@@ -394,7 +364,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
                             children: [
                               const Icon(Icons.verified, color: AppColors.successGreen, size: 20),
                               const SizedBox(width: 8),
-                              const Text('Contrato Verificado', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.successGreen)),
+                              const Text('Contrato Verificado', 
+                                style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.successGreen)),
                             ],
                           ),
                           const SizedBox(height: 8),
@@ -410,10 +381,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
                     ),
                   ],
 
-
                   const SizedBox(height: 16),
 
-
+                  // Monto
                   TextFormField(
                     controller: _montoController,
                     decoration: InputDecoration(
@@ -421,22 +391,33 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                       prefixIcon: const Icon(Icons.attach_money),
                       hintText: '0.00',
+                      errorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: AppColors.errorRed, width: 1.5),
+                      ),
                     ),
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
                     validator: (value) {
-                      if (value == null || value.isEmpty) return 'Ingrese un monto';
-                      final monto = double.tryParse(value);
-                      if (monto == null || monto <= 0) return 'Monto inválido';
-                      if (_cuentaSeleccionada != null && monto > _cuentaSeleccionada!.saldo) {
-                        return 'Saldo insuficiente';
+                      if (_submitted) {
+                        if (value == null || value.isEmpty) {
+                          return 'Ingrese un monto';
+                        }
+                        final monto = double.tryParse(value);
+                        if (monto == null || monto <= 0) {
+                          return 'Monto inválido';
+                        }
+                        if (_cuentaSeleccionada != null && monto > _cuentaSeleccionada!.saldo) {
+                          return 'Saldo insuficiente';
+                        }
                       }
                       return null;
                     },
                   ),
                   const SizedBox(height: 24),
 
-
-                  const Text('Origen del pago', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textGray)),
+                  // Origen del pago
+                  const Text('Origen del pago', 
+                    style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textGray)),
                   const SizedBox(height: 8),
                   DropdownButtonFormField<CuentaModel>(
                     value: _cuentaSeleccionada,
@@ -444,6 +425,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
                     decoration: InputDecoration(
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                       prefixIcon: const Icon(Icons.account_balance_wallet),
+                      errorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: AppColors.errorRed, width: 1.5),
+                      ),
                     ),
                     items: cuentas.map((cuenta) {
                       return DropdownMenuItem(
@@ -452,24 +437,63 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       );
                     }).toList(),
                     onChanged: (value) => setState(() => _cuentaSeleccionada = value),
+                    validator: (value) {
+                      if (_submitted && value == null) {
+                        return 'Seleccione una cuenta';
+                      }
+                      return null;
+                    },
                   ),
-                  const SizedBox(height: 48),
+                  const SizedBox(height: 24),
 
+                  // ✓ CRITERIO 4: Card de resumen (aparece SOLO cuando formulario es válido)
+                  if (_isFormValid) ...[
+                    Card(
+                      elevation: 4,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      color: AppColors.secondaryBlue.withOpacity(0.05),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('RESUMEN DEL PAGO',
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.secondaryBlue)),
+                            const SizedBox(height: 12),
+                            _buildConfirmRow('Servicio:', _resumenServicio),
+                            const SizedBox(height: 8),
+                            _buildConfirmRow('Contrato:', _resumenContrato),
+                            const SizedBox(height: 8),
+                            _buildConfirmRow('Monto:', _resumenMonto),
+                            if (_cuentaSeleccionada != null) ...[
+                              const SizedBox(height: 8),
+                              _buildConfirmRow('Cuenta origen:', 
+                                '${_cuentaSeleccionada!.tipo.toUpperCase()} (${_cuentaSeleccionada!.numero})'),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                  ],
 
+                  // ✓ CRITERIO 2: Botón deshabilitado hasta que formulario sea válido
                   SizedBox(
                     width: double.infinity,
                     height: 55,
                     child: ElevatedButton(
-                      onPressed: _loading ? null : _confirmarPago,
+                      onPressed: _isFormValid && !_loading ? _onSubmit : null,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryRed,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         elevation: 4,
+                        disabledBackgroundColor: AppColors.primaryRed.withOpacity(0.4),
                       ),
                       child: _loading
                           ? const CircularProgressIndicator(color: Colors.white)
-                          : const Text('PROCEDER AL PAGO', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 1.0)),
+                          : const Text('PAGAR', 
+                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 1.0)),
                     ),
                   ),
                 ],
@@ -481,7 +505,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
     );
   }
 
-
   IconData _getServiceIcon(String servicio) {
     switch (servicio) {
       case 'Agua': return Icons.water_drop;
@@ -492,7 +515,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
     }
   }
 
-
   String _getHintText() {
     switch (_servicio) {
       case 'Agua': return 'Ej: 12345678';
@@ -502,7 +524,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
       default: return 'Ingrese número de contrato';
     }
   }
-
 
   String _formatDate(DateTime date) {
     return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
