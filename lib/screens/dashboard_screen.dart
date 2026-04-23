@@ -16,6 +16,7 @@ import 'ahorro_screen.dart';
 import '../widgets/tarjeta_cuenta_custom.dart';
 import 'transferencia_screen.dart';
 import 'recarga_screen.dart';
+import 'movimientos_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -624,6 +625,10 @@ Widget _buildMainAccount(FirestoreService firestore, UserModel user) {
             
             _buildOpItem("Ahorro", Icons.savings_outlined,
               () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AhorroScreen()))),
+
+            _buildOpItem("Movimientos", Icons.history_rounded,
+              () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MovimientosScreen()))),
+
           ],
         ),
       ),
