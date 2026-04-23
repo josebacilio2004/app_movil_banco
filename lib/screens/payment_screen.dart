@@ -265,10 +265,12 @@ class _PaymentScreenState extends State<PaymentScreen> {
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.secondaryBlue)),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
-                    value: _servicio,
+                    initialValue: _servicio,
                     decoration: InputDecoration(
                       labelText: 'Selecciona Servicio',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      filled: true,
+                      fillColor: AppColors.containerLow,
+                      border: OutlineInputBorder(borderRadius: AppStyles.radiusXL, borderSide: BorderSide.none),
                       prefixIcon: const Icon(Icons.electrical_services),
                       errorBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -310,10 +312,12 @@ class _PaymentScreenState extends State<PaymentScreen> {
                     decoration: InputDecoration(
                       labelText: 'Número de Contrato',
                       hintText: _getHintText(),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      filled: true,
+                      fillColor: AppColors.containerLow,
+                      border: OutlineInputBorder(borderRadius: AppStyles.radiusXL, borderSide: BorderSide.none),
                       prefixIcon: const Icon(Icons.numbers),
                       errorBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: AppStyles.radiusXL,
                         borderSide: const BorderSide(color: AppColors.errorRed, width: 1.5),
                       ),
                       suffixIcon: _verifying
@@ -353,9 +357,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: AppColors.successGreen.withOpacity(0.1),
+                        color: AppColors.successGreen.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppColors.successGreen.withOpacity(0.3)),
+                        border: Border.all(color: AppColors.successGreen.withValues(alpha: 0.3)),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -388,11 +392,13 @@ class _PaymentScreenState extends State<PaymentScreen> {
                     controller: _montoController,
                     decoration: InputDecoration(
                       labelText: 'Monto a Pagar (S/)',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      filled: true,
+                      fillColor: AppColors.containerLow,
+                      border: OutlineInputBorder(borderRadius: AppStyles.radiusXL, borderSide: BorderSide.none),
                       prefixIcon: const Icon(Icons.attach_money),
                       hintText: '0.00',
                       errorBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: AppStyles.radiusXL,
                         borderSide: const BorderSide(color: AppColors.errorRed, width: 1.5),
                       ),
                     ),
@@ -420,13 +426,15 @@ class _PaymentScreenState extends State<PaymentScreen> {
                     style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textGray)),
                   const SizedBox(height: 8),
                   DropdownButtonFormField<CuentaModel>(
-                    value: _cuentaSeleccionada,
+                    initialValue: _cuentaSeleccionada,
                     isExpanded: true,
                     decoration: InputDecoration(
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      filled: true,
+                      fillColor: AppColors.containerLow,
+                      border: OutlineInputBorder(borderRadius: AppStyles.radiusXL, borderSide: BorderSide.none),
                       prefixIcon: const Icon(Icons.account_balance_wallet),
                       errorBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: AppStyles.radiusXL,
                         borderSide: const BorderSide(color: AppColors.errorRed, width: 1.5),
                       ),
                     ),
@@ -449,9 +457,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   // ✓ CRITERIO 4: Card de resumen (aparece SOLO cuando formulario es válido)
                   if (_isFormValid) ...[
                     Card(
-                      elevation: 4,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      color: AppColors.secondaryBlue.withOpacity(0.05),
+                      shape: RoundedRectangleBorder(borderRadius: AppStyles.radiusXL),
+                      color: AppColors.containerLow,
+                      elevation: 0,
                       child: Padding(
                         padding: const EdgeInsets.all(16),
                         child: Column(
@@ -486,9 +494,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryRed,
                         foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        elevation: 4,
-                        disabledBackgroundColor: AppColors.primaryRed.withOpacity(0.4),
+                        shape: RoundedRectangleBorder(borderRadius: AppStyles.radiusFull),
+                        elevation: 0,
+                        disabledBackgroundColor: AppColors.primaryRed.withValues(alpha: 0.4),
                       ),
                       child: _loading
                           ? const CircularProgressIndicator(color: Colors.white)

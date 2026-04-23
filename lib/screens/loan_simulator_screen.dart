@@ -110,7 +110,7 @@ class _LoanSimulatorScreenState extends State<LoanSimulatorScreen> {
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primaryRed.withOpacity(0.3),
+                    color: AppColors.primaryRed.withValues(alpha: 0.3),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -226,7 +226,7 @@ class _LoanSimulatorScreenState extends State<LoanSimulatorScreen> {
                       shape: StadiumBorder(
                         side: isSelected 
                             ? BorderSide.none 
-                            : BorderSide(color: AppColors.outline.withOpacity(0.3)),
+                            : BorderSide(color: AppColors.outline.withValues(alpha: 0.3)),
                       ),
                     ),
                   );
@@ -272,7 +272,7 @@ class _LoanSimulatorScreenState extends State<LoanSimulatorScreen> {
                       shape: StadiumBorder(
                         side: isSelected 
                             ? BorderSide.none 
-                            : BorderSide(color: AppColors.outline.withOpacity(0.3)),
+                            : BorderSide(color: AppColors.outline.withValues(alpha: 0.3)),
                       ),
                     ),
                   );
@@ -287,10 +287,10 @@ class _LoanSimulatorScreenState extends State<LoanSimulatorScreen> {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: AppColors.outline.withOpacity(0.2)),
+                border: Border.all(color: AppColors.outline.withValues(alpha: 0.2)),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha: 0.05),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -303,7 +303,7 @@ class _LoanSimulatorScreenState extends State<LoanSimulatorScreen> {
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: AppColors.secondaryBlue.withOpacity(0.05),
+                      color: AppColors.secondaryBlue.withValues(alpha: 0.05),
                       borderRadius: const BorderRadius.only(
                         topLeft: Radius.circular(20),
                         topRight: Radius.circular(20),

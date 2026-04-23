@@ -56,7 +56,7 @@ class TransactionsScreen extends StatelessWidget {
                     leading: Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: isDebito ? AppColors.errorRed.withOpacity(0.05) : AppColors.successGreen.withOpacity(0.05),
+                        color: isDebito ? AppColors.errorRed.withValues(alpha: 0.05) : AppColors.successGreen.withValues(alpha: 0.05),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(

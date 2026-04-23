@@ -88,7 +88,7 @@ class _AhorroScreenState extends State<AhorroScreen> {
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.primaryRed.withOpacity(0.3),
+                            color: AppColors.primaryRed.withValues(alpha: 0.3),
                             blurRadius: 10,
                             offset: const Offset(0, 4),
                           ),
@@ -108,7 +108,7 @@ class _AhorroScreenState extends State<AhorroScreen> {
                           Text(
                             'Dic 2025',
                             style: TextStyle(
-                              color: Colors.white.withOpacity(0.8),
+                              color: Colors.white.withValues(alpha: 0.8),
                               fontSize: 12,
                             ),
                           ),
@@ -178,7 +178,7 @@ class _AhorroScreenState extends State<AhorroScreen> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
+                              color: Colors.white.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Row(
@@ -207,7 +207,7 @@ class _AhorroScreenState extends State<AhorroScreen> {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppColors.outline.withOpacity(0.2)),
+                        border: Border.all(color: AppColors.outline.withValues(alpha: 0.2)),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -265,7 +265,7 @@ class _AhorroScreenState extends State<AhorroScreen> {
                     const SizedBox(height: 12),
                     Container(
                       decoration: BoxDecoration(
-                        border: Border.all(color: AppColors.outline.withOpacity(0.2)),
+                        border: Border.all(color: AppColors.outline.withValues(alpha: 0.2)),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: SingleChildScrollView(
@@ -340,7 +340,7 @@ class _AhorroScreenState extends State<AhorroScreen> {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppColors.outline.withOpacity(0.2)),
+                        border: Border.all(color: AppColors.outline.withValues(alpha: 0.2)),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -361,11 +361,11 @@ class _AhorroScreenState extends State<AhorroScreen> {
                               hintText: '0.00',
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(color: AppColors.outline.withOpacity(0.3)),
+                                borderSide: BorderSide(color: AppColors.outline.withValues(alpha: 0.3)),
                               ),
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(color: AppColors.outline.withOpacity(0.3)),
+                                borderSide: BorderSide(color: AppColors.outline.withValues(alpha: 0.3)),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),

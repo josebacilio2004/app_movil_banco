@@ -137,9 +137,9 @@ class _LoanScreenState extends State<LoanScreen> {
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: AppColors.secondaryBlue.withOpacity(0.05),
+                color: AppColors.secondaryBlue.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: AppColors.secondaryBlue.withOpacity(0.1)),
+                border: Border.all(color: AppColors.secondaryBlue.withValues(alpha: 0.1)),
               ),
               child: Column(
                 children: [

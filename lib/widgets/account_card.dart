@@ -23,7 +23,7 @@ class AccountCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           gradient: LinearGradient(
             colors: isAhorro 
-              ? [AppColors.secondaryBlue, AppColors.secondaryBlue.withOpacity(0.8)]
+              ? [AppColors.secondaryBlue, AppColors.secondaryBlue.withValues(alpha: 0.8)]
               : [Colors.white, Colors.white],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,

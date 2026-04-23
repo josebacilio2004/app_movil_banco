@@ -8,8 +8,8 @@ class AppColors {
   static const Color secondaryBlue = Color(0xFF416182);
   static const Color tertiaryBlue = Color(0xFF0059A8);
   
-  static const Color background = Color(0xFFF9F9FC);
-  static const Color surface = Color(0xFFF9F9FC);
+  static const Color background = Color(0xFFF5F6F8);
+  static const Color surface = Color(0xFFFFFFFF);
   static const Color onSurface = Color(0xFF1A1C1E);
   
   static const Color containerLow = Color(0xFFF3F3F6);
@@ -30,9 +30,9 @@ class AppColors {
 }
 
 class AppStyles {
-  // Typography mapping from Stitch
+  // Typography mapping NuBank style (Poppins)
   static TextStyle headline({double size = 22, Color color = AppColors.onSurface, FontWeight weight = FontWeight.bold}) {
-    return GoogleFonts.manrope(
+    return GoogleFonts.poppins(
       fontSize: size,
       fontWeight: weight,
       color: color,
@@ -40,7 +40,7 @@ class AppStyles {
   }
 
   static TextStyle body({double size = 14, Color color = AppColors.onSurface, FontWeight weight = FontWeight.normal}) {
-    return GoogleFonts.inter(
+    return GoogleFonts.poppins(
       fontSize: size,
       fontWeight: weight,
       color: color,
@@ -49,22 +49,24 @@ class AppStyles {
 
   static const List<BoxShadow> cardShadow = [
     BoxShadow(
-      color: Color(0x0A000000),
-      blurRadius: 10,
-      offset: Offset(0, 4),
+      color: Color(0x0A000000), // 4% opacity (muy suave)
+      blurRadius: 24,
+      spreadRadius: 0,
+      offset: Offset(0, 8),
     )
   ];
 
   static const List<BoxShadow> intenseShadow = [
     BoxShadow(
-      color: Color(0x0F000000),
-      blurRadius: 16,
-      offset: Offset(0, 8),
+      color: Color(0x14000000), // 8% opacity
+      blurRadius: 32,
+      spreadRadius: 0,
+      offset: Offset(0, 12),
     )
   ];
 
-  static BorderRadius radiusXL = BorderRadius.circular(12);
-  static BorderRadius radius2XL = BorderRadius.circular(20);
+  static BorderRadius radiusXL = BorderRadius.circular(16);
+  static BorderRadius radius2XL = BorderRadius.circular(24);
   static BorderRadius radius3XL = BorderRadius.circular(32);
   static BorderRadius radiusFull = BorderRadius.circular(999);
 }
