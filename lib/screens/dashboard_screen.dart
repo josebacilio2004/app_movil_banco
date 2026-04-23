@@ -13,6 +13,7 @@ import 'payment_screen.dart';
 import 'loan_screen.dart';
 import 'loan_simulator_screen.dart';
 import 'ahorro_screen.dart';
+import '../widgets/tarjeta_cuenta_custom.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -554,21 +555,30 @@ Widget _itemInfo(String titulo, String valor) {
     );
   }
 
-  Widget _buildMainAccount(FirestoreService firestore, UserModel user) {
-    return StreamBuilder<List<CuentaModel>>(
-      stream: firestore.getCuentas(user.userId),
-      builder: (context, snap) {
-        if (!snap.hasData || snap.data == null || snap.data!.isEmpty) return const SizedBox(height: 100);
-        final mainAcc = snap.data!.firstWhere((a) => a.tipo == 'corriente', orElse: () => snap.data!.first);
-        return StitchCard(
-          title: "Saldo Disponible",
-          amount: "S/ ${NumberFormat("#,##0.00").format(mainAcc.saldo)}",
-          number: "**** **** **** ${mainAcc.numero.length > 4 ? mainAcc.numero.substring(mainAcc.numero.length - 4) : '0000'}",
-          holder: user.nombre,
-        );
+  // En _buildHomeView, reemplaza _buildMainAccount por:
+
+Widget _buildMainAccount(FirestoreService firestore, UserModel user) {
+  return StreamBuilder<List<CuentaModel>>(
+    stream: firestore.getCuentas(user.userId),
+    builder: (context, snap) {
+      if (!snap.hasData || snap.data == null || snap.data!.isEmpty) {
+        return const SizedBox(height: 100);
       }
-    );
-  }
+      final mainAcc = snap.data!.firstWhere(
+        (a) => a.tipo == 'corriente', 
+        orElse: () => snap.data!.first,
+      );
+      
+      // ✅ Usar la nueva tarjeta personalizada
+      return TarjetaCuentaCustom(
+        nombre: user.nombre,
+        numero: mainAcc.numero,
+        saldo: mainAcc.saldo,
+        tipo: mainAcc.tipo,
+      );
+    },
+  );
+}
 
   Widget _buildQuickOperations() {
   return Column(
@@ -651,19 +661,53 @@ Widget _itemInfo(String titulo, String valor) {
 }
 
   Widget _buildRecentActivityHeader() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text("ACTIVIDAD RECIENTE", style: AppStyles.headline(size: 18)),
-        TextButton.icon(
-          onPressed: () {},
-          icon: const Icon(Icons.expand_more, size: 16),
-          label: Text("Este mes", style: AppStyles.body(size: 12, weight: FontWeight.bold, color: AppColors.secondaryBlue)),
-          style: TextButton.styleFrom(foregroundColor: AppColors.secondaryBlue),
-        )
-      ],
-    );
-  }
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text("ACTIVIDAD RECIENTE", style: AppStyles.headline(size: 18)),
+          TextButton.icon(
+            onPressed: () {},
+            icon: const Icon(Icons.expand_more, size: 16),
+            label: Text("Este mes", style: AppStyles.body(size: 12, weight: FontWeight.bold, color: AppColors.secondaryBlue)),
+            style: TextButton.styleFrom(foregroundColor: AppColors.secondaryBlue),
+          ),
+        ],
+      ),
+      const SizedBox(height: 12),
+      // Filtros
+      Row(
+        children: [
+          _buildActivityFilter("Todos", true),
+          const SizedBox(width: 12),
+          _buildActivityFilter("Débitos", false),
+          const SizedBox(width: 12),
+          _buildActivityFilter("Créditos", false),
+        ],
+      ),
+    ],
+  );
+}
+
+Widget _buildActivityFilter(String label, bool isSelected) {
+  return Container(
+    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+    decoration: BoxDecoration(
+      color: isSelected ? AppColors.primaryRed : AppColors.containerLow,
+      borderRadius: BorderRadius.circular(30),
+    ),
+    child: Text(
+      label,
+      style: TextStyle(
+        color: isSelected ? Colors.white : AppColors.secondaryBlue,
+        fontSize: 12,
+        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+      ),
+    ),
+  );
+}
 
   Widget _buildRecentActivityList(FirestoreService firestore, UserModel user) {
     return StreamBuilder<List<TransaccionModel>>(
