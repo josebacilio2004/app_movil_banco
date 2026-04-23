@@ -11,6 +11,7 @@ import '../utils/constants.dart';
 import '../widgets/stitch_widgets.dart';
 import 'payment_screen.dart';
 import 'loan_screen.dart';
+import 'loan_simulator_screen.dart'; 
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -585,8 +586,9 @@ Widget _itemInfo(String titulo, String valor) {
               const SizedBox(width: 20),
               _buildOpItem("Recargar", Icons.phone_iphone_rounded, () {}),
               const SizedBox(width: 20),
-              _buildOpItem("Préstamos", Icons.monetization_on_rounded, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LoanScreen()))),
-              const SizedBox(width: 20),
+              _buildOpItem("Préstamos", Icons.monetization_on_rounded, 
+                () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LoanSimulatorScreen()))
+              ),
               _buildOpItem("Crédito", Icons.request_page, () => Navigator.pushNamed(context, "solicitud_credito"), color: AppColors.successGreen),
             ],
           ),
